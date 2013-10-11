@@ -12,18 +12,9 @@ configure :development do
 end
 
 get '/' do
-  @chapters = []
   erb :home
 end
 
 get '/:chapter' do
-  path = File.join CHAPTERS, params[:chapter] + '.md'
-  return not_found unless File.exists?(path)
-  @title = params[:chapter].capitalize
-  @chapter = RDiscount.new(File.read(path)).to_html
-  erb :frame, :layout => false
-end
-
-not_found do
-  "Whoops!"
+  erb params[:chapter].to_sym
 end
