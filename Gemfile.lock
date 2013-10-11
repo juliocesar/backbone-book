@@ -48,6 +48,7 @@ GEM
     sprockets-sass (1.0.2)
       sprockets (~> 2.0)
       tilt (~> 1.1)
+    stringex (2.1.0)
     tilt (1.4.1)
 
 PLATFORMS
@@ -59,3 +60,4 @@ DEPENDENCIES
   sinatra
   sinatra-asset-pipeline
   sinatra-contrib
+  stringex

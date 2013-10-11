@@ -1,0 +1,101 @@
+// All styles manifest
+// ===================
+
+// Dependencies.
+@import 'normalize'
+
+// Fix box sizing.
+*,
+*:after,
+*:before
+  -webkit-box-sizing: border-box
+  -moz-box-sizing: border-box
+  box-sizing: border-box
+
+// The great margin/padding/border/outline reset.
+*
+  margin: 0
+  padding: 0
+  border: 0
+  outline: none
+
+// Fonts.
+$serif: 'museo-slab', serif
+
+// Colours.
+$dark: black
+$clear: #e7e7e7
+$orange: #f26148
+
+// Grid.
+$spacing: 1rem
+
+// Extends and special classes
+.amp
+  font-family: Palatino, "Book Antiqua", serif
+  font-style: italic
+
+.separator
+  display: inline-block
+  margin: $spacing auto 0
+  color: $clear
+
+// Links.
+a
+  color: $orange
+  font-weight: 500
+  opacity: .5
+  pointer-events: none
+
+  &[href]
+    opacity: 1
+    pointer-events: auto
+
+
+
+body
+  max-width: 1000px
+  margin: 0 auto
+  font-family: $serif
+
+.home-header
+  margin: 150px auto 0
+  text-align: center
+
+.home-footer
+  margin: $spacing*2 auto 0
+  text-align: center
+  font-size: .8rem
+
+.title
+  margin: $spacing*2 0 0
+  font-size: 2.6rem
+
+.subtitle
+  display: inline-block
+  position: relative
+  margin: $spacing 0 0
+  font-size: 1.1rem
+
+  &:before,
+  &:after
+    position: absolute
+    top: 50%
+    height: 2px
+    width: $spacing*3
+    content: ' '
+    background: $clear
+
+  &:before
+    left: -$spacing*4
+
+  &:after
+    right: -$spacing*4
+
+.chapter-index
+  max-width: $spacing*15
+  margin: 2rem auto 0
+  list-style: none
+
+  li
+    margin-top: $spacing/2

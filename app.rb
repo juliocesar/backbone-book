@@ -12,6 +12,7 @@ configure :development do
 end
 
 get '/' do
+  @chapters = []
   erb :home
 end
 
