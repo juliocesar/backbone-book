@@ -4,8 +4,6 @@ require 'rdiscount'
 
 register Sinatra::AssetPipeline
 
-CHAPTERS = File.join(File.dirname(__FILE__), 'chapters')
-
 configure :development do
   require 'sinatra/reloader'
   register Sinatra::Reloader
@@ -17,4 +15,11 @@ end
 
 get '/:chapter' do
   erb params[:chapter].to_sym
+end
+
+
+helpers do
+  def partial name, locals={}
+    erb name, layout: false, locals: locals
+  end
 end

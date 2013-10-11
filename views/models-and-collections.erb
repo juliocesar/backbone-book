@@ -8,11 +8,13 @@
   Models
 </h2>
 
-<p>
+<p class="mark">
   Although they reflect data that's on the server, they're not meant to be a mirror of what the server model is, so this business of replicating every relation and validation that exists on the other side is time wasted. It may come down to that, but there'll be a use case on the client app to justify it, or it's useless.
 </p>
 
-<p>
+<%= partial :- %>
+
+<p class="mark">
   Views will listen to attribute changes that happen on your models, so plan accordingly as you'll be listening to changes in specific attributes with views. For example, it's fine for you to have an attribute in <code>Book</code> called <code>paid</code> that's stale, as in it exists only on the client side (the server knows it's paid because there's an associated payment entry). So just setting <code>paid</code> to <code>true</code> re-renders whatever view associated itself with this model and renders an appropriate template that shows that this thing is paid for.
 </p>
 
@@ -28,7 +30,9 @@
   }
 });</code></pre>
 
-<p>
+<%= partial :- %>
+
+<p class="mark">
   Don't clutter models with a lot of methods for rendering attributes in different ways, human-friendly, different date formats, and so on. Write a presenter object that's separate from the model, which you can pass the model to it's methods and it'll handle that for you. Then pass that presenter to the view (more on that in an upcoming chapter).
 </p>
 
@@ -44,7 +48,7 @@
   API <span class="amp">&amp;</span> strategies
 </h2>
 
-<p>
+<p class="mark">
   Most apps communicate with a server using HTTP with a RESTful API. So the API URLs are of summary importance. Don't scatter them around the app. Write a module named <code>apiUrl</code> which exports a function with the same name. That module acts like a catalog of URLs, and model or collection that talks with the API has to require it. It looks like this:
 </p>
 
@@ -85,7 +89,9 @@ if (typeof module !== 'undefined') {
   }
 });</code></pre>
 
-<p>
+<%= partial :- %>
+
+<p class="mark">
   Data associations are easy to solve without plugins <strong>if your API is sane</strong>, so it's worth making it so otherwise your data layer will absorb your API's ugliness and amplify it by one hundred. Assume we have authors for those books I spoke of, and when fetching an author, I want to grab their books along. Say the API looks like this:
 </p>
 
@@ -105,6 +111,11 @@ if (typeof module !== 'undefined') {
   Now make sure from now on you refer to <strong>the collection</strong> to access the values and not the container model attribute. The collection will contain the representation of what the author's books are, and ensure the book model instances are in sync with the server.
 </p>
 
-<p>
-  Loading associated data is trivial once you think for a second about what makes sense. Assume you
+<%= partial :- %>
+
+<p class="mark">
+  Loading associated data is trivial once you think for a second about what makes sense. Assume you have this URL in your app:
 </p>
+
+<pre><code>/authors/:id/books</code></pre>
+

@@ -37,9 +37,12 @@ $spacing: 1rem
   font-style: italic
 
 .separator
-  display: inline-block
-  margin: $spacing auto 0
+  display: block
+  margin: $spacing 0 0
+  font-size: .8rem
+  text-align: center
   color: $clear
+  pointer-events: none
 
 // Links.
 a
@@ -128,11 +131,13 @@ body
   code
     font-size: 1rem
 
-  p:first-letter
+  .mark:first-letter
     font-size: 150%
     font-weight: bold
+    line-height: 1
 
-  *:first-of-type
+  h1 + p,
+  h2 + p
     margin-top: 2rem
 
   h2
