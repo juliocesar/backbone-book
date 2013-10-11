@@ -1,0 +1,1 @@
+* The pattern of instancing a new collection and populating it every time you visit a URL is wrong for most cases. You want to fetch and keep things around as much as possible to make the app fast for situations like hitting the back button. So create a "global" collection of `Book` and as you

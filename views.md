@@ -1,0 +1,1 @@
+* Stepping out of the model-change-rerender-view pattern that may be warranted at times, but it comes at a price: more complexity. If you consider rendering a template is cheap memory/CPU-wise, it's rarely worth it.
