@@ -4,32 +4,32 @@
 
 * Most apps communicate with a server using HTTP with a RESTful API. So the API URLs are of summary importance. Don't scatter them around the app. What I do is I write a module I name `apiUrl` which exports a function with the same name. That module acts like a catalog of URLs, and model or collection that talks with the API has to require it. It looks like this:
 
-    # List of API URLs.
-    var URLs = {
-      books: function() {
-        return "/api/books";
-      },
-      book: function(id) {
-        return "/api/books/" + id;
-      },
-      subscriptions: function(userId, id) {
-        return "/api/users/" + userId + "/subscriptions/" + id;
+      # List of API URLs.
+      var URLs = {
+        books: function() {
+          return "/api/books";
+        },
+        book: function(id) {
+          return "/api/books/" + id;
+        },
+        subscriptions: function(userId, id) {
+          return "/api/users/" + userId + "/subscriptions/" + id;
+        }
       }
-    }
 
-    # Helper for accessing the URL list. Think of it as something similar
-    # to Rails' URL helpers.
-    var apiUrl = function() {
-      var args = [].slice.call(arguments),
-          type = args.unshift();
-      return URLs[type] ? URLs[type].apply(URLs, args) : undefined;
-    }
+      # Helper for accessing the URL list. Think of it as something similar
+      # to Rails' URL helpers.
+      var apiUrl = function() {
+        var args = [].slice.call(arguments),
+            type = args.unshift();
+        return URLs[type] ? URLs[type].apply(URLs, args) : undefined;
+      }
 
-    if (module) {
-      module.exports = apiUrl
-    } else {
-      this.apiUrl = apiUrl
-    }
+      if (module) {
+        module.exports = apiUrl
+      } else {
+        this.apiUrl = apiUrl
+      }
 
 Then forever (no exceptions) refer to URLs by calling this module. In a `Book` model, it'd look like this:
 
@@ -59,13 +59,13 @@ Now make sure you henceforth use *the collection* and not the attribute because 
 * Views will listen to attribute changes that happen on these, so plan accordingly. For example, it's fine for you to have an attribute called `paid` that's stale, as in it exists only on the client side (the server knows it's paid because there's an associated payment entry). So just setting `paid` to `true` re-renders whatever view associated itself with this model and renders an appropriate template that shows that this thing is paid for.
 * Before you cry that Backbone will always commit every model attribute to the server, the solution is simple: declare a list of stale attributes (they're likely gonna be lesser in number than the others), and omit them from what gets sent by overriding `toJSON()`:
 
-    var Book = Backbone.Model.extend({
-      stale: ['paid'],
+      var Book = Backbone.Model.extend({
+        stale: ['paid'],
 
-      toJSON: function() {
-        return _.omit(this.attributes, this.stale);
-      }
-    });
+        toJSON: function() {
+          return _.omit(this.attributes, this.stale);
+        }
+      });
 
 * Don't clutter models with stuff like, for instance, a whole lot of methods for rendering attributes in different ways, human-friendly, different date formats, and so on. Write a presenter object that's **separate** to the model, which you can pass the model to it's methods and it'll handle that for you. Then pass that presenter to the view (more on that in an upcoming chapter).
 

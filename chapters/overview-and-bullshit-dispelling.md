@@ -1,11 +1,6 @@
 # Overview and bullshit-dispelling.
 
-## The lot
-
 * You have models, views (or controllers, name it as you will), and URLs. As is with nearly every other popular and decent framework/lib of this kind.
-* Models and collections are your data layer. Given what the user does is create/change/delete data, this is where the real action is.
-* Views watch the data layer, and display it. Views don't have data except through the data layer. If yours do, you're making a mistake.
-* URLs, when triggered, will call functions via your router. These functions will load data by getting the data layer to fetch it from somewhere, and give said data to one or more views to render.
 * The rule of thumb is get the hell away from the DOM. You won't read from it ever, since your data layer knows what has what value. You'll write to the DOM only by rendering views.
 * Small modules that live outside of Backbone's triad (read: are not a model/view/router) **are ok**. So long as they perform **one** function and are clear in what they in turn require, it's all good.
 * Common architecture mistakes involve in getting one or more of the previous statements wrong, "bending the rules a little", or however else you excuse it.

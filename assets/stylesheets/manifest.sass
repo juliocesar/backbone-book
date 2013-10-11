@@ -3,6 +3,7 @@
 
 // Dependencies.
 @import 'normalize'
+@import 'prism'
 
 // Fix box sizing.
 *,
@@ -51,8 +52,6 @@ a
     opacity: 1
     pointer-events: auto
 
-
-
 body
   max-width: 1000px
   margin: 0 auto
@@ -99,3 +98,25 @@ body
 
   li
     margin-top: $spacing/2
+
+.chapter
+  max-width: 740px
+  margin-bottom: 150px
+
+  h1:first-of-type
+    margin: 150px auto 0
+    text-align: center
+
+    &:after
+      display: block
+      margin-top: $spacing
+      content: '★'
+      font-size: 1.1rem
+  p,
+  li
+    margin: 1rem 0 0
+    font-size: 1.1rem
+    line-height: 1.4
+
+  *:first-of-type
+    margin-top: 2rem
