@@ -53,16 +53,20 @@ a
     pointer-events: auto
 
 body
+  -webkit-animation: fade-in .3s linear forwards
+  -moz-animation: fade-in .3s linear forwards
+  animation: fade-in .3s linear forwards
   max-width: 1000px
   margin: 0 auto
   font-family: $serif
+  opacity: 0
 
 .home-header
   margin: 150px auto 0
   text-align: center
 
 .home-footer
-  margin: $spacing*2 auto 0
+  margin: $spacing*3 auto 0
   text-align: center
   font-size: .8rem
 
@@ -92,12 +96,14 @@ body
     right: -$spacing*4
 
 .chapter-index
-  max-width: $spacing*15
-  margin: 2rem auto 0
+  max-width: $spacing*17
+  margin: 3rem auto 0
   list-style: none
 
   li
-    margin-top: $spacing/2
+    font-size: 1.1rem
+    margin-top: $spacing
+    text-align: center
 
 .chapter
   max-width: 740px
@@ -109,14 +115,42 @@ body
 
     &:after
       display: block
-      margin-top: $spacing
+      margin-top: $spacing*2
       content: '★'
       font-size: 1.1rem
   p,
-  li
+  li,
+  pre
     margin: 1rem 0 0
     font-size: 1.1rem
     line-height: 1.4
 
+  code
+    font-size: 1rem
+
+  p:first-letter
+    font-size: 150%
+    font-weight: bold
+
   *:first-of-type
     margin-top: 2rem
+
+  h2
+    margin: 3rem auto 0
+
+// The fade-in animation
+@-webkit-keyframes fade-in
+  from
+    opacity: 0
+  to
+    opacity: 1
+@-moz-keyframes fade-in
+  from
+    opacity: 0
+  to
+    opacity: 1
+@keyframes fade-in
+  from
+    opacity: 0
+  to
+    opacity: 1
