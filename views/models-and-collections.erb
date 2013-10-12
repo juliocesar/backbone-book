@@ -15,11 +15,11 @@
 <%= partial :- %>
 
 <p class="mark">
-  Views will listen to attribute changes that happen on your models, so plan accordingly as you'll be listening to changes in specific attributes with views. For example, it's fine for you to have an attribute in <code>Book</code> called <code>paid</code> that's stale, as in it exists only on the client side (the server knows it's paid because there's an associated payment entry). So just setting <code>paid</code> to <code>true</code> re-renders whatever view associated itself with this model and renders an appropriate template that shows that this thing is paid for.
+  Views will listen to attribute changes that happen on your models, so plan accordingly as you'll be listening to changes in specific attributes with views. For example, it's fine having an attribute in <code>Book</code> called <code>paid</code> that's stale, as in it exists only on the client side (the server knows it's paid because there's an associated payment entry). So just setting <code>paid</code> to <code>true</code> re-renders whatever view associated itself with this model and renders an appropriate template that shows that this thing is paid for.
 </p>
 
 <p>
-  Before you cry that Backbone will always commit every model attribute to the server, the solution is simple: declare a list of stale attributes (they're likely gonna be lesser in number than the others), and omit them from what gets sent by overriding <code>toJSON()</code>:
+  Before you cry that Backbone will always send every model attribute to the server when you <code>save()</code>, the solution is simple: declare a list of stale attributes (they're likely gonna be lesser in number than the others), and omit them from what gets sent by overriding <code>toJSON()</code>:
 </p>
 
 <pre><code>var Book = Backbone.Model.extend({
@@ -33,7 +33,7 @@
 <%= partial :- %>
 
 <p class="mark">
-  Don't clutter models with a lot of methods for rendering attributes in different ways, human-friendly, different date formats, and so on. Write a presenter object that's separate from the model, which you can pass the model to it's methods and it'll handle that for you. Then pass that presenter to the view (more on that in an upcoming chapter).
+  Don't clutter models with a lot of methods for rendering attributes in different ways, human-friendly, different date formats, and so on. Write a presenter object that's separate from the model, which you can pass the model to it's methods and it'll handle that for you. Then pass that presenter to the view (more on that in the <a>views</a> chapter).
 </p>
 
 <h2>
@@ -119,3 +119,40 @@ if (typeof module !== 'undefined') {
 
 <pre><code>/authors/:id/books</code></pre>
 
+<p>
+  You need to grab the author first and then his/her books. This could go one of two ways: you have loaded the author before, and thus it's in memory, or you need to grab it from the server and then grab the books.
+</p>
+
+<p>
+  Before you OCD about performance and think you should do this in one request, consider you're potentially creating an endpoint that will send down a huge amount of information. Correct use of caching, specifically <a href="http://en.wikipedia.org/wiki/HTTP_ETag">ETags</a>, will mitigate these problems by a lot.
+</p>
+
+<p>
+  Inside the method that's called for that route, here's how you'll do it.
+</p>
+
+<pre><code>showBooks: function(authorId) {
+  var author = App.Authors.get(authorId);
+  if (author) {
+    author.books.fetch({
+      success: function() {
+        view = new BooksList collection: author.books
+        // Render the view.
+      }
+    });
+  } else {
+    author = new Author({id: authorId});
+    author.fetch({
+      success: function() {
+        App.Authors.add(author);
+        author.books.fetch(
+          // Same as in the case above.
+        );
+      }
+    });
+  }
+</code></pre>
+
+<p>
+  I can hear you having a heart attack over code repetition. But for starters, having the whole code that describes what happens when you visit each URL <strong>in the router itself</strong> is a terrible idea. I'll explain this refactor further ahead in the <a>router chapter</a>.
+</p>
