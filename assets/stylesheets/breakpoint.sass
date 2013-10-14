@@ -1,0 +1,19 @@
+// Media queries breakpoints
+// =========================
+//
+// Usage:
+//
+// .foo
+//   +breakpoint(large)
+//     width: 50%
+//   +breakpoint(medium)
+//     width: 80%
+//   width: 75%
+
+@mixin breakpoint($point)
+  @if $point == small
+    @media (max-width: 780px)
+      @content
+  @else
+    @media (max-width: $point)
+      @content
