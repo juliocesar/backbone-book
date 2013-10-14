@@ -5,7 +5,6 @@ gem 'puma'
 gem 'sinatra'
 gem 'sinatra-asset-pipeline'
 gem 'rdiscount'
-gem 'stringex'
 
 group :development do
   gem 'sinatra-contrib'
