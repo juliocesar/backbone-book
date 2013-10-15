@@ -72,10 +72,10 @@ apiUrl = (type, args...) ->
 
 <pre><code>class Author extends Backbone.Model
   initialize: ->
-    @books = new Books @get('books'), url: apiUrl('books', @id)</code></pre>
+    @books = new Books @get('books'), url: apiUrl('author books', @id)</code></pre>
 
 <p>
-  Now make sure from now on you refer to <strong>the collection</strong> (<code>author.books</code>) to access the values and not the container model attribute (<code>author.get 'books'</code>). The collection will contain the representation of what the author's books are, and ensure the book model instances are in sync with the server.
+  Now make sure from now on you refer to <strong>the collection</strong> (<code>author.books</code>) to access the values and not the container model attribute (<code>author.get 'books'</code>). The collection will contain the representation of what the author's books are, and will ensure the book model instances are in sync with the server as you add, remove, or edit them.
 </p>
 
 <%= partial :- %>
@@ -177,3 +177,31 @@ class PartialModel extends Backbone.Model
     # Just render the book.
   else
     # Fetch and then render it.</code></pre>
+
+<%= partial :- %>
+
+<p class="mark">
+  Where and when you instance your collections has to be consistent with the data strategy you conceive. It seems popular to, on every route (when a URL is visited), you instance a collection, fetch data for it, pass it to a view and render it. But that pattern leaves out something you'll want 90% of the time, which is <strong>not</strong> discarding data you have already have.
+</p>
+
+<p>
+  In the context of the previous example: the user visits the URL for a book, goes back to the list, visits a different book. Going back to the first book (say the user wants to double check something) needs to happen instantly. This doesn't mean you can't have the book model fetch data from the server everytime the URL is visited anyway, in case what's in the collection has gone stale, but it's worth rendering <strong>something</strong> right away. You can then re-render the book page as soon as <code>fetch()</code> succeeds.
+</p>
+
+<p>
+  So say this app is about browsing authors and their books. Just instance and keep a "global" collection of authors around. Data always gets added to it as the user browses the app, similar to the previous examples where I referred to <code>App.Authors</code>. Pass this collection around either via a global or by requiring it in each subsequent module.
+</p>
+
+<p>
+  Because every URL will always query whether the global collection contains an author and attempt to fetch it if not, you can keep the concern of flushing it to avoid reaching a point where you'll have thousands of authors in memory <strong>within</strong> the collection itself, which is ideal. You could do this maybe by ensuring the collection API endpoint supplies an ETag header that when changed, the next time the collection calls <code>fetch()</code> you pass <code>{ remove: true, reset: true }</code>. Or really query how many objects the collection has.
+</p>
+
+<%= partial :- %>
+
+<p class="mark">
+  Backbone Collections are really smart in how they handle data. By default, they won't allow duplicate IDs, and if you re-add an existing model, you can pass <a href="http://backbonejs.org/#Collection-add">an option</a> to <code>add()</code> which will get the collection to merge the attributes with the current model living in the collection.
+</p>
+
+<p>
+  If you're wondering why that matters, think of this: you can keep models synchronous using HTTP and WebSockets/Server-side events simultaneously. So long as you make it so that every message coming from the server uses the collection methods (<code>add()</code>, <code>remove()</code>), you can literally add real-time to an app on top of an existing HTTP/REST API without interfering with it at all, and enable or disable the functionality without the app breaking.
+</p>
