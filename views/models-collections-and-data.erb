@@ -5,19 +5,19 @@
 </h1>
 
 <p class="mark">
-  Although models may reflect logic that's on the server, they're not meant to mirror all of it. Replicating every relation and validation that exists on the other side is time wasted. It may come down to that, but there'll be a use case on the client app to justify it, or it's useless.
+  Although models may reflect logic that’s on the server, they’re not meant to mirror all of it. Replicating every relation and validation that exists on the other side is time wasted. It may come down to that, but there’ll be a use case on the client app to justify it, or it’s useless.
 </p>
 
 <%= partial :- %>
 
 <p class="mark">
-  Don't clutter models with a lot of methods for rendering attributes in different ways, human-friendly, different date formats, and so on. Write a presenter object that's separate from the model, which you can pass the model to it's methods and it'll handle that for you. Then pass that presenter to the view (more on that in the <a>views</a> chapter).
+  Don’t clutter models with a lot of methods for rendering attributes in different ways, human-friendly, different date formats, and so on. Write a presenter object that's separate from the model, which you can pass the model to it's methods and it’ll handle that for you. Then pass that presenter to the view (more on that in the <a>views</a> chapter).
 </p>
 
 <%= partial :- %>
 
 <p class="mark">
-  Views will listen to attribute changes that happen on your models, so plan accordingly as you'll be listening to changes in specific attributes. For example, it's fine having an attribute in <code>Book</code> called <code>paid</code> that's stale, as in it exists only on the client side (the server knows it's paid because there's an associated payment entry). So just setting <code>paid</code> to <code>true</code> re-renders whatever view associated itself with this model and renders an appropriate template that shows that this thing is paid for.
+  Views will listen to attribute changes that happen on your models, so plan accordingly as you'll be listening to changes in specific attributes. For example, it’s fine having an attribute in <code>Book</code> called <code>paid</code> that’s stale, as in it exists only on the client side (the server knows it’s paid because there's an associated payment entry). So just setting <code>paid</code> to <code>true</code> re-renders whatever view associated itself with this model and renders an appropriate template that shows that this thing is paid for.
 </p>
 
 <p>
@@ -51,7 +51,7 @@ apiUrl = (type, args...) ->
   URLs[type]? args...</code></pre>
 
 <p>
-  Then forever (no exceptions) refer to URLs by calling this module. In a <code>Book</code> model, it'd look like this:
+  Then forever (no exceptions) refer to URLs by calling this module. In a <code>Book</code> model, it’d look like this:
 </p>
 
 <pre><code>class Book extends Backbone.Model
@@ -61,13 +61,13 @@ apiUrl = (type, args...) ->
 <%= partial :- %>
 
 <p class="mark">
-  Data associations are easy to solve without plugins <strong>if the server API is sane</strong>, so it's worth making it so otherwise your data layer will absorb your API's ugliness and amplify it by one hundred. Assume we have authors for those books I spoke of, and when fetching an author, I want to grab their books along. Say the API looks like this:
+  Data associations are easy to solve without plugins <strong>if the server API is sane</strong>, so it’s worth making it so otherwise your data layer will absorb your API’s ugliness and amplify it by one hundred. Assume we have authors for those books I spoke of, and when fetching an author, I want to grab their books along. Say the API looks like this:
 </p>
 
 <pre><code>GET   /api/authors/1?with=books</code></pre>
 
 <p>
-  And by calling this URL I get the author object along with a <code>books</code> attribute which is an array of book objects, here's how you'd do it:
+  And by calling this URL I get the author object along with a <code>books</code> attribute which is an array of book objects, here’s how you’d do it:
 </p>
 
 <pre><code>class Author extends Backbone.Model
@@ -75,7 +75,7 @@ apiUrl = (type, args...) ->
     @books = new Books @get('books'), url: apiUrl('author books', @id)</code></pre>
 
 <p>
-  Now make sure from now on you refer to <strong>the collection</strong> (<code>author.books</code>) to access the values and not the container model attribute (<code>author.get 'books'</code>). The collection will contain the representation of what the author's books are, and will ensure the book model instances are in sync with the server as you add, remove, or edit them.
+  Now make sure from now on you refer to <strong>the collection</strong> (<code>author.books</code>) to access the values and not the container model attribute (<code>author.get 'books'</code>). The collection will contain the representation of what the author’s books are, and will ensure the book model instances are in sync with the server as you add, remove, or edit them.
 </p>
 
 <%= partial :- %>
@@ -87,15 +87,15 @@ apiUrl = (type, args...) ->
 <pre><code>/authors/:id/books</code></pre>
 
 <p>
-  You need to grab the author first and then his/her books. This could go one of two ways: you have loaded the author before, and thus it's in memory, or you need to grab it from the server and then grab the books.
+  You need to grab the author first and then his/her books. This could go one of two ways: you have loaded the author before, and thus it’s in memory, or you need to grab it from the server and then grab the books.
 </p>
 
 <p>
-  Before you OCD about performance and think you should do this in one request, consider you're potentially creating an endpoint that will send down a huge amount of information. Correct use of caching, specifically <a href="http://en.wikipedia.org/wiki/HTTP_ETag">ETags</a>, will mitigate these problems by a lot.
+  Before you OCD about performance and think you should do this in one request, consider you’re potentially creating an endpoint that will send down a huge amount of information. Correct use of caching, specifically <a href="http://en.wikipedia.org/wiki/HTTP_ETag">ETags</a>, will mitigate these problems by a lot.
 </p>
 
 <p>
-  Inside the method that's called for that route, here's how you'll do it.
+  Inside the method that’s called for that route, here’s how you’ll do it.
 </p>
 
 <pre><code>showBooks: (authorId) ->
@@ -112,17 +112,17 @@ apiUrl = (type, args...) ->
         # Render the view.</code></pre>
 
 <p>
-  I can hear you having a heart attack over code repetition. But for starters, having the whole code that describes what happens when you visit each URL <strong>in the router itself</strong> is a terrible idea. I'll explain this refactor further ahead in the <a>router chapter</a>.
+  I can hear you having a heart attack over code repetition. But for starters, having the whole code that describes what happens when you visit each URL <strong>in the router itself</strong> is a terrible idea. I’ll explain this refactor further ahead in the <a>router chapter</a>.
 </p>
 
 <%= partial :- %>
 
 <p class="mark">
-  The best way to handle pagination is by using  <a href="http://tools.ietf.org/html/rfc5988">link headers</a> (<a href="http://developer.github.com/v3/">GitHub's API uses it</a>). To be clear: pagination doesn't imply in your necessarily having <strong>pages</strong> of information. You could use this for infinite scrolling, or that. How you present it goes beyond what your collection needs to worry about.
+  The best way to handle pagination is by using  <a href="http://tools.ietf.org/html/rfc5988">link headers</a> (<a href="http://developer.github.com/v3/">GitHub’s API uses it</a>). To be clear: pagination doesn’t imply in your necessarily having <strong>pages</strong> of information. You could use this for infinite scrolling, or that. How you present it goes beyond what your collection needs to worry about.
 </p>
 
 <p>
-  Integrating this with a Backbone collection is trivial (I'm using <a href="https://github.com/jfromaniello/parse-links">this</a> to parse it):
+  Integrating this with a Backbone collection is trivial (I’m using <a href="https://github.com/jfromaniello/parse-links">this</a> to parse it):
 </p>
 
 <pre><code>class PaginatedCollection extends Backbone.Collection
@@ -134,7 +134,7 @@ apiUrl = (type, args...) ->
     super</code></pre>
 
 <p>
-  Obviously, collections that need pagination should inherit from <code>PaginatedCollection</code>. From hereon, you can check for <code>link.last?</code>, <code>link.next?</code> and so on in collection instances to determine whether there's more data to be retrieved or not.
+  Obviously, collections that need pagination should inherit from <code>PaginatedCollection</code>. From hereon, you can check for <code>link.last?</code>, <code>link.next?</code> and so on in collection instances to determine whether there’s more data to be retrieved or not.
 </p>
 
 <p>
@@ -144,11 +144,11 @@ apiUrl = (type, args...) ->
 <%= partial :- %>
 
 <p class="mark">
-  The concept of a full/partial model is handy for cases where the server API emits "light" representations of models. Like in the case above, getting a list of books for an author, it's quite likely that you'll want to render a list and then when a user clicks an entry, you fetch and show the full book.
+  The concept of a full/partial model is handy for cases where the server API emits “light” representations of models. Like in the case above, getting a list of books for an author, it’s quite likely that you’ll want to render a list and then when a user clicks an entry, you fetch and show the full book.
 </p>
 
 <p>
-  Which means you don't necessarily want a request to return the complete book objects if they'll be large and numerous (e.g.: containing a summary, comments, etc).
+  Which means you don’t necessarily want a request to return the complete book objects if they’ll be large and numerous (e.g.: containing a summary, comments, etc).
 </p>
 
 <pre><code># Partial model
@@ -189,7 +189,7 @@ class PartialModel extends Backbone.Model
 </p>
 
 <p>
-  So say this app is about browsing authors and their books. Just instance and keep a "global" collection of authors around. Data always gets added to it as the user browses the app, similar to the previous examples where I referred to <code>App.Authors</code>. Pass this collection around either via a global or by requiring it in each subsequent module.
+  So say this app is about browsing authors and their books. Just instance and keep a “global” collection of authors around. Data always gets added to it as the user browses the app, similar to the previous examples where I referred to <code>App.Authors</code>. Pass this collection around either via a global or by requiring it in each subsequent module.
 </p>
 
 <p>
