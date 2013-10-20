@@ -235,6 +235,86 @@ class BookPresenter extends ModelPresenter
 <%= partial :- %>
 
 <p class="mark">
+  Always handle data changes optimistically. <code>Backbone.Model</code> and <code>Backbone.Collection</code> both provide callbacks for when a change succeeds (returns a <code>2xx</code> status code) or fails (returns <code>4xx</code> or <code>5xx</code>), but you shouldn't keep the UI waiting until a response comes back to re-render.
+</p>
+
+<p>
+  When creating a new model, say, after filling a form and submitting it, the model should be immediately placed in a collection (if it belongs in one), and rendered. That'll happen instantly as far as the user is concerned, which is great. The app will feel a lot snappier, and that's one of the strengths of a JavaScript application.
+</p>
+
+<p>
+  If the server errors out for any reason, you can act on that after adding the model to the collection and rendering, perhaps by re-rendering the model and with the view in "editing mode", and let the user fix what's wrong in a form again.
+</p>
+
+<p>
+  You may want, however, to provide a faster way for a user to determine whether a model is valid or not right when submitting the form so there's no delayed feedback loop. HTML5 provides <a href="http://diveintohtml5.info/forms.html">validations</a> (scroll down to near the end) at the form level. This is excellent if all data input happens through a form, as the browser won't let the form be submitted until all the fields are valid.
+</p>
+
+<p>
+  If not, or if HTML5 validations aren't supported by a browser you'll want the app to run on, there are <a href="http://backbonejs.org/#Model-validate">model validations</a>. When creating a new model (and adding to a collection), you should check whether the model is valid <strong>first</strong> before adding it.
+</p>
+
+<p>
+  A simple model validation looks like this:
+</p>
+
+<pre><code># The book model
+# ==============
+
+class Book extends Backbone.Model
+  validate: (attributes, options = {}) ->
+    if _.isBlank attributes.title
+      "Title can't be empty" </code></pre>
+
+<p>
+  The view looks like this (pretend we have an <code>attributesFrom</code> method which pulls text field values from a jQuery form element):
+</p>
+
+<pre><code># Component for creating a new book from a form
+# =============================================
+
+class NewBookView extends Backbone.View
+  template: JST['books/new']
+  events:
+    'submit .new-book-form': 'submitForm'
+
+  submitForm: (event) ->
+    event.preventDefault()
+    attributes = @attributesFrom $ event.target
+    model = new Book attributes
+    if not model.isValid()
+      # The error message will be in model.validationError. Ensure
+      # the template takes that into consideration.
+      @render()
+    else
+      model.save()
+      App.Books.add model</code></pre>
+
+<p>
+  Handling validations for when editing a model is a lot easier, as it's assumed that the model is already in a collection, so there's no need to deal that. Just ensure you're trapping the right event when re-rendering the view.
+</p>
+
+<p>
+  Assuming <code>BookListView</code>'s template carries a form along to allow for in-place editing:
+</p>
+
+<pre><code>class BookListView extends Backbone.View
+  template: JST['books/list_entry']
+  events:
+    'submit .edit-book-form': 'submitForm'
+
+  initialize: ->
+    @listenTo @model, 'change invalid', @render
+
+  # ...</code></pre>
+
+<p>
+  As <code>change</code> won't fire if the model is invalid, you're declaring that when the model is made invalid, that the component should be rendered again. The template can then ensure the form is displayed with error messages on.
+</p>
+
+<%= partial :- %>
+
+<p class="mark">
   Let the boudaries or markup be the limits of what a component touches, and code it so it works stand-alone.
 </p>
 
