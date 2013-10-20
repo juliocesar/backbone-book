@@ -1,0 +1,207 @@
+<% @title = 'Views' %>
+
+<h1>
+  Views
+</h1>
+
+<p class="mark">
+  Views are small programs for displaying a model or a collection. You can think of them as components. They oughta be testable in their own behaviour, and although they can at times use other views (e.g.: a view for rendering a list will likely render sub-views for individual entries), they should still work, as in not throw errors, when rendered on their own.
+</p>
+
+<%= partial :- %>
+
+<p class="mark">
+  Avoid interacting with the DOM if possible. A view's <code>render</code> method should be the only method that does it, so don't do stuff like adding/removing class names through other methods when something in the model/collection changes.
+</p>
+
+<p>
+  If something changed with the data, re-render the view. What you <strong>can</strong> do, however, is make <code>render</code> more complex to accommodate use cases such as, for example, a model is currently being edited and you don't want to destroy the form when the user is half-way through it. For example:
+</p>
+
+<pre><code>class BookView extends Backbone.View
+  # ...
+
+  render: ->
+    if @model.get('editing')
+      unless confirm("Model has been modified. Discard changes?")
+        return false
+    @$el.html JST['books/list_entry'] @model
+    @</code></pre>
+
+<p>
+  Rendering should be an exclusively <strong>destructive operation</strong> as far as what's in the container element goes. Calling <code>render</code> by itself never appends anything to the DOM. Instead, it should just clear what's in the the component element and render the template in again (it's what happens when you call <code>@$el.html()</code> passing a rendered template object to it) .
+</p>
+
+<%= partial :- %>
+
+<p>
+  Following the previous tip means it's mostly up to the template to handle every possible state of the model, and things can get hairy if you happen to have a bunch of those. For example, in the following <a href="https://github.com/netzpirat/haml-coffee">haml-coffee</a> template:
+</p>
+
+<pre><code>- if @model.get('paid') and not @model.get('returned')
+  %p
+    This book is paid for! Thanks!
+- else if @model.get('overdue')
+  %p
+    You need to pay for this book immediately!
+- else if (@model.get('paid') and @model.get('returned'))
+  %p
+    You returned this book to the store. Here's your money back.
+# ...</code></pre>
+
+<p>
+  This example happens to be quite slim, but any 4+ tags with a lot of copy that you put in between each state, or maybe every permutation of states meaning a different copy needs to be shown, and you're looking at a huge template in charge of too much.
+</p>
+
+<p>
+  There are a few things you can do to mitigate that, but first, understand that if you're using logic templates (as opposed to a <a href="http://mustache.github.io/">logic-less template</a> format), then the template really is a program and needs to be treated as such, with refactorings and whatnot.
+</p>
+
+<p>
+  To make a long story short, you should use a presenter (see below for more on that). For the specific problem of too much markup, you can break the template into smaller units and render them as partials (smaller sub-templates) from within the template itself. The presenter will handle the intricacies of that for you.
+</p>
+
+<%= partial :- %>
+
+<p class="mark">
+  A presenter is a special type of object which you will pass a model to when creating a new instance, and in turn, you'll pass it to a view. It'll act as a wrapper for the model/collection, and have only presentation-related logic, and <strong>it's not part of the Backbone suite</strong>.
+</p>
+
+<p>
+  You could write a generic presenter object like this:
+</p>
+
+<pre><code># A generic presenter object for Backbone.Model
+# =============================================
+
+class ModelPresenter
+
+  # presenter = new ModelPresenter model: model
+  constructor: (options = {}) ->
+    @model = options.model
+
+  # Pass a template object and it'll output it with the presenter's
+  # model attributes.
+  partial: (template) ->
+    template _.extend @, @model.attributes</code></pre>
+
+<p>
+  Then for any particular case, subclass it and add whatever other methods:
+</p>
+
+<pre><code># A presenter for the Book model
+# ==============================
+
+class BookPresenter extends ModelPresenter
+  isPaid: ->
+    !!@model.get('paid')
+
+  isReturned: ->
+    @model.get('paid') and @model.get('returned')</code></pre>
+
+<p>
+  In the corresponding view, instead of passing the model or the model's attributes directly to a template, create a new presenter and pass it instead, like so:
+</p>
+
+<pre><code>class BookView extends Backbone.View
+  # ...
+
+  render: ->
+    presenter = new BookPresenter model: @model
+    @$el.html JST['books/list_entry'] presenter
+    @</code></pre>
+
+<p>
+  Now the template can be vastly simplified:
+</p>
+
+<pre><code>- if isPaid()
+  = partial JST['books/paid_notice']
+- else if isReturned()
+  = partial JST['books/returned_notice']</code></pre>
+
+<p>
+  Or you could go even further and make the <code>partial</code> method in <code>ModelPresenter</code> prettier, though then dependent on the <code>JST</code> object which contains the templates being present (pretty certain).
+</p>
+
+<pre><code>partial: (name) ->
+  JST[name] _.extend(@, @model.attributes)</code></pre>
+
+<p>
+  You can now call partials like so:
+</p>
+
+<pre><code>- if isPaid()
+  = partial 'books/paid_notice'</code></pre>
+
+<p>
+  This may sound like a lot of work, but it's all boilerplate you'll surely write once and carry with you across projects, so it's very worth it.
+</p>
+
+<%= partial :- %>
+
+<p class="mark">
+  The correct way to listen to a collection, model, or other kinds of events is by using the <code>listenTo</code> method. Never, <strong>ever</strong> use <code>model.on 'change'</code>.
+</p>
+
+<p>
+  So, this is <strong>correct</strong>:
+</p>
+
+<pre><code>class MyView extends Backbone.View
+  initialize: ->
+    @listenTo @model, 'change', @render</code></pre>
+
+<p>
+  While this is <strong>wrong</strong>:
+</p>
+
+<pre><code>class MyView extends Backbone.View
+  initialize: ->
+    @model.on 'change', @render</code></pre>
+
+<p>
+  In the former you're declaring that the view needs to listen to events on the model, whereas the latter modifies the model itself and ties it forever to the view instance, even if you call <code>remove</code>, which means the memory for the view won't be freed if you try to get rid of it.
+</p>
+
+<p>
+  In short, even at a logical level, it's <strong>correct</strong> to say that the view needs to listen to changes in the model.
+</p>
+
+<%= partial :- %>
+
+<p class="mark">
+  It's customary to specify a <code>tagName</code> and/or a <code>className</code> for a subclass of <code>Backbone.View</code>. I find those concerns should live entirely in the template, and the template should really include the root element along with whatever CSS classes it may have.
+</p>
+
+<p>
+  What that means is the <code>render</code> method takes a bit of a hit in terms of how complex it ends, but it's a price I'm frequently willing to pay just so I can keep the entire markup for a view in the template document.
+</p>
+
+<pre><code>render: ->
+  presenter = new BookPresenter model: @model
+  $newEl = $(@template presenter)
+  if @$el[0].tagName is $newEl[0].tagName
+    @$el.html $newEl.html()
+    @$el.attr 'class', $newEl.attr('class')
+  else
+    @setElement $newEl
+  @</code></pre>
+
+<%= partial :- %>
+
+<p class="mark">
+  Keep the code for the templates away from the view code itself. If there is one concession you'll have to make in terms of a view having an external dependency, it's this: you'll keep the templates in an object which you'll pass to it.
+</p>
+
+<%= partial :- %>
+
+<p class="mark">
+  Don't do stuff like getting what class name the view or something in it has.
+</p>
+
+<%= partial :- %>
+
+<p class="mark">
+  To expand on the earlier statement that you can think of them as components, you're better off <strong>really</strong> treating them as such. Pretend the boudaries or markup are the limits.
+</p>
