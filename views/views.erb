@@ -5,31 +5,33 @@
 </h1>
 
 <p class="mark">
-  Views are small programs for displaying a model or a collection. You can think of them as components. They oughta be testable in their own behaviour, and although they can at times use other views (e.g.: a view for rendering a list will likely render sub-views for individual entries), they should still work, as in not throw errors, when rendered on their own.
+  Views are <strong>components</strong> for displaying a model or a collection. They oughta be testable in their own behaviour, and although they can at times use other views (e.g.: a view for rendering a list will likely render sub-views for individual entries), they should still work, as in not throw errors, when rendered on their own.
 </p>
 
 <%= partial :- %>
 
 <p class="mark">
-  Avoid interacting with the DOM if possible. A view's <code>render</code> method should be the only method that does it, so don't do stuff like adding/removing class names through other methods when something in the model/collection changes.
+  Avoid interacting with the DOM indiscriminately. A view's <code>render</code> method should be the only method that does it, so don't do stuff like adding/removing class names through other methods when something in the model/collection changes.
 </p>
 
 <p>
-  If something changed with the data, re-render the view. What you <strong>can</strong> do, however, is make <code>render</code> more complex to accommodate use cases such as, for example, a model is currently being edited and you don't want to destroy the form when the user is half-way through it. For example:
+  If the data changed, just re-render the view. What you <strong>can</strong> do, however, is make <code>render</code> more complex to accommodate use cases such as, for example, a model is currently being edited and you don't want to destroy the form when the user is half-way through it. For example:
 </p>
 
-<pre><code>class BookView extends Backbone.View
+<pre><code>class BookListView extends Backbone.View
+  template: JST['books/list_entry']
+
   # ...
 
   render: ->
     if @model.get('editing')
       unless confirm("Model has been modified. Discard changes?")
         return false
-    @$el.html JST['books/list_entry'] @model
+    @$el.html @template @model
     @</code></pre>
 
 <p>
-  Rendering should be an exclusively <strong>destructive operation</strong> as far as what's in the container element goes. Calling <code>render</code> by itself never appends anything to the DOM. Instead, it should just clear what's in the the component element and render the template in again (it's what happens when you call <code>@$el.html()</code> passing a rendered template object to it) .
+  Rendering should be a <strong>destructive operation</strong> as far as what's in the container element goes. Calling <code>render</code> by itself never appends anything to the DOM. Instead, it should just clear what's in the the component element and render the template in again (it's what happens when you call <code>@$el.html()</code> passing a rendered template object to it) .
 </p>
 
 <%= partial :- %>
@@ -54,7 +56,7 @@
 </p>
 
 <p>
-  There are a few things you can do to mitigate that, but first, understand that if you're using logic templates (as opposed to a <a href="http://mustache.github.io/">logic-less template</a> format), then the template really is a program and needs to be treated as such, with refactorings and whatnot.
+  There are a few things you can do to mitigate that, but first, understand that if you're using logic templates (as opposed to a <a href="http://mustache.github.io/">logic-less template</a> format), then the template really is a program and needs to be maintained.
 </p>
 
 <p>
@@ -86,7 +88,7 @@ class ModelPresenter
     template _.extend @, @model.attributes</code></pre>
 
 <p>
-  Then for any particular case, subclass it and add whatever other methods:
+  Then for any particular case, subclass it and add more specific methods:
 </p>
 
 <pre><code># A presenter for the Book model
@@ -103,12 +105,14 @@ class BookPresenter extends ModelPresenter
   In the corresponding view, instead of passing the model or the model's attributes directly to a template, create a new presenter and pass it instead, like so:
 </p>
 
-<pre><code>class BookView extends Backbone.View
+<pre><code>class BookListView extends Backbone.View
+  template: JST['books/list_entry']
+
   # ...
 
   render: ->
     presenter = new BookPresenter model: @model
-    @$el.html JST['books/list_entry'] presenter
+    @$el.html @template presenter
     @</code></pre>
 
 <p>
@@ -121,7 +125,7 @@ class BookPresenter extends ModelPresenter
   = partial JST['books/returned_notice']</code></pre>
 
 <p>
-  Or you could go even further and make the <code>partial</code> method in <code>ModelPresenter</code> prettier, though then dependent on the <code>JST</code> object which contains the templates being present (pretty certain).
+  Or you could go even further and make the <code>partial</code> method in <code>ModelPresenter</code> prettier, though then dependent on the <code>JST</code> object, which contains the templates, being present (pretty certain).
 </p>
 
 <pre><code>partial: (name) ->
@@ -135,7 +139,29 @@ class BookPresenter extends ModelPresenter
   = partial 'books/paid_notice'</code></pre>
 
 <p>
-  This may sound like a lot of work, but it's all boilerplate you'll surely write once and carry with you across projects, so it's very worth it.
+  This may sound like a lot of work, but it's all boilerplate you'll write once and carry with you across projects, so it's very worth it.
+</p>
+
+<%= partial :- %>
+
+<p class="mark">
+  I've been accessing templates through this object named <code>JST</code> throughout the examples. <a href="https://github.com/netzpirat/haml_coffee_assets">haml_coffee_assets</a> packages your templates and can export the object in a few different ways, but the idea isn't new nor exclusive to the tool, and you can get the same thing going with pretty much any other.
+</p>
+
+<p>
+  We need to get our templates to the views somehow. One simple way to do that is by putting them in an object, accessible via directory-like attribute names. It's intuitive to just mirror the templates directory structure in it.
+</p>
+
+<p>
+  That object will need to be visible to your views, which in the case of <a href="http://browserify.org/">browserify</a> means you'll need to <code>export</code> the <code>JST</code> object and <code>require</code> it in every view. Alternatively if you're using <a href="https://github.com/sstephenson/sprockets">Sprockets</a> (you are if you're using Rails), just make sure the <code>JST</code> object lives in the <code>window</code> scope.
+</p>
+
+<p>
+  Unsurprisingly, there are many ways to skin this cat. Tools like <a href="http://requirejs.org/">requirejs</a> allow you to load templates as dependencies when a view gets used (instanced, even), and it'll handle caching for you. For <a href="http://gruntjs.com/">Grunt</a> there's <a href="https://github.com/gruntjs/grunt-contrib-jst">grunt-contrib-jst</a>.
+</p>
+
+<p>
+  This is one of those points that can be cut short by saying: it doesn't really matter how you do it. Pick one that sits well with your stack and move on.
 </p>
 
 <%= partial :- %>
@@ -145,7 +171,7 @@ class BookPresenter extends ModelPresenter
 </p>
 
 <p>
-  So, this is <strong>correct</strong>:
+  So, <strong>this is correct</strong>:
 </p>
 
 <pre><code>class MyView extends Backbone.View
@@ -153,7 +179,7 @@ class BookPresenter extends ModelPresenter
     @listenTo @model, 'change', @render</code></pre>
 
 <p>
-  While this is <strong>wrong</strong>:
+  While <strong>this is wrong</strong>:
 </p>
 
 <pre><code>class MyView extends Backbone.View
@@ -161,47 +187,106 @@ class BookPresenter extends ModelPresenter
     @model.on 'change', @render</code></pre>
 
 <p>
-  In the former you're declaring that the view needs to listen to events on the model, whereas the latter modifies the model itself and ties it forever to the view instance, even if you call <code>remove</code>, which means the memory for the view won't be freed if you try to get rid of it.
+  In the former you're declaring that the view needs to listen to events on the model, whereas the latter modifies the model itself and ties it forever to the view instance, even if you call <code>remove</code>, which means the memory for the view won't be freed when you get rid of it.
 </p>
 
 <p>
-  In short, even at a logical level, it's <strong>correct</strong> to say that the view needs to listen to changes in the model.
+  In short, <strong>more accurate</strong> to say that the view needs to listen to changes in the model, and <code>listenTo</code> is the way to go.
 </p>
 
 <%= partial :- %>
 
 <p class="mark">
-  It's customary to specify a <code>tagName</code> and/or a <code>className</code> for a subclass of <code>Backbone.View</code>. I find those concerns should live entirely in the template, and the template should really include the root element along with whatever CSS classes it may have.
+  The way a Backbone view works by default, you need to specify a <code>tagName</code> and/or a <code>className</code>. I'm from the opinion that those details should live entirely in the template, since they are markup-related, and that the template should include the root element along with any CSS classes it may have.
 </p>
 
 <p>
-  What that means is the <code>render</code> method takes a bit of a hit in terms of how complex it ends, but it's a price I'm frequently willing to pay just so I can keep the entire markup for a view in the template document.
+  What that means is the <code>render</code> method takes a hit in terms of how complex it ends, but it's worth it for the sake of isolation.
 </p>
 
 <pre><code>render: ->
   presenter = new BookPresenter model: @model
-  $newEl = $(@template presenter)
-  if @$el[0].tagName is $newEl[0].tagName
-    @$el.html $newEl.html()
-    @$el.attr 'class', $newEl.attr('class')
-  else
-    @setElement $newEl
+  @$el.remove()
+  @setElement @template presenter
   @</code></pre>
 
+<p>
+  Now instead of a template consisting of the view element's <strong>contents</strong>, it will be a full representation of it. You can then drop this:
+</p>
+
+<pre><code>class BookListView extends Backbone.View
+  template: JST['books/list_entry']
+  tagName: 'li'
+  className: 'book-list-entry'</code></pre>
+
+<p>
+  And go with this:
+</p>
+
+<pre><code>class BookListView extends Backbone.View
+  template: JST['books/list_entry']</code></pre>
+
+<p>With the template now containing the root element and it's class name along:</p>
+
+<pre><code>%li.book-list-entry
+  %h1= @title
+  ...</code></pre>
+
 <%= partial :- %>
 
 <p class="mark">
-  Keep the code for the templates away from the view code itself. If there is one concession you'll have to make in terms of a view having an external dependency, it's this: you'll keep the templates in an object which you'll pass to it.
+  Let the boudaries or markup be the limits of what a component touches, and code it so it works stand-alone.
+</p>
+
+<p>
+  A view's responsibility ends where the next data point begins. A view for a list of books will be in charge of things like displaying the total amount of books, and of tracking when books get added/removed to/from the collection. It'll handle the logic <strong>for the group</strong> of books, but not for the individual books that get rendered by it. For that, it'll call <code>BookListView</code>, pass a model to it, render that view and append what was rendered to its container, thus delegating the particulars of displaying a specific model to it.
+</p>
+
+<p>
+  The best way to gauge whether you're doing things right is really render a view to the screen on its own and see whether it renders and works without throwing errors. Though ensuring the styles look correct being a different story altogether than the one we're discussing in this book, that's what you should aim for.
+</p>
+
+<p>
+  Even the <code>BookListView</code> mentioned before, which is the component for rendering a book in a list of books, it should render correctly when rendered outside of the list, in the "void", so long as we pass a <code>Book</code> model to it (or a mock of one), and it can find its template. When writing tests for your components, that's exactly what you will be doing in fact.
 </p>
 
 <%= partial :- %>
 
 <p class="mark">
-  Don't do stuff like getting what class name the view or something in it has.
+  Speaking of tests, DOM isolation will allow you to test most of a component without writing <strong>browser tests</strong>. Those are the gnarly, slow tests that everyone's afraid of. The tests that ensure the <strong>logic</strong> behind your views and how they interact with your data is sound will run very fast, and they'll be a lot more numerous than your browser tests, all things being well planned. Mind you, browser tests are necessary, but you're better off isolating them from the rest, and perhaps running it off your normal testing cycle with a CI server.
 </p>
 
-<%= partial :- %>
+<p>
+  So avoid simple pitfalls like reading from the DOM. Always refer to a model/collection for the facts. You're reading from the DOM when you do things like these:
+</p>
 
-<p class="mark">
-  To expand on the earlier statement that you can think of them as components, you're better off <strong>really</strong> treating them as such. Pretend the boudaries or markup are the limits.
+<pre><code>togglePaid: ->
+  if @$el.is '.paid'
+    @model.set 'paid', no
+</code></pre>
+
+<p>
+  Or:
+</p>
+
+<pre><code>isEmpty: ->
+  if @$el.find('.books-list').length is 0
+    # ...</code></pre>
+
+<p>
+  That's useless, and now those views are tied not only to their model/collection, but to the DOM as well, for simple stuff that could be obtained from the data model:
+</p>
+
+<pre><code>togglePaid: ->
+  @model.set 'paid', !model.get('paid')</code></pre>
+
+<p>
+  And:
+</p>
+
+<pre><code>isEmpty: ->
+  if @collection.isEmpty()</code></pre>
+
+<p>
+  Remember: keep the point of contact between a component and the DOM restricted to what goes on in <code>render</code> and to writing to it, never reading.
 </p>
