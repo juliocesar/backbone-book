@@ -4,13 +4,13 @@
   Views
 </h1>
 
-<p class="mark">
+<p>
   Views are <strong>components</strong> for displaying a model or a collection. They oughta be testable in their own behaviour, and although they can at times use other views (e.g.: a view for rendering a list will likely render sub-views for individual entries), they should still work, as in not throw errors, when rendered on their own.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Avoid interacting with the DOM indiscriminately. A view’s <code>render</code> method should be the only method that does it, so don’t do stuff like adding/removing class names through other methods when something in the model/collection changes.
 </p>
 
@@ -65,7 +65,7 @@
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   A presenter is a special type of object which you will pass a model to when creating a new instance, and in turn, you’ll pass it to a view. It’ll act as a wrapper for the model/collection, and have only presentation-related logic, and <strong>it’s not part of the Backbone suite</strong>.
 </p>
 
@@ -144,7 +144,7 @@ class BookPresenter extends ModelPresenter
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   I’ve been accessing templates through this object named <code>JST</code> throughout the examples. <a href="https://github.com/netzpirat/haml_coffee_assets">haml_coffee_assets</a> packages your templates and can export the object in a few different ways, but the idea isn’t new nor exclusive to the tool, and you can get the same thing going with pretty much any other.
 </p>
 
@@ -166,7 +166,7 @@ class BookPresenter extends ModelPresenter
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   The correct way to listen to a collection, model, or other kinds of events is by using the <code>listenTo</code> method. Never, <strong>ever</strong> use <code>model.on 'change'</code>.
 </p>
 
@@ -196,7 +196,7 @@ class BookPresenter extends ModelPresenter
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   The way a Backbone view works by default, you need to specify a <code>tagName</code> and/or a <code>className</code>. I’m from the opinion that those details should live entirely in the template, since they are markup-related, and that the template should include the root element along with any CSS classes it may have.
 </p>
 
@@ -234,7 +234,7 @@ class BookPresenter extends ModelPresenter
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Always handle data changes optimistically. <code>Backbone.Model</code> and <code>Backbone.Collection</code> both provide callbacks for when a change succeeds (returns a <code>2xx</code> status code) or fails (returns <code>4xx</code> or <code>5xx</code>), but you shouldn’t keep the UI waiting until a response comes back to re-render.
 </p>
 
@@ -314,7 +314,7 @@ class NewBookView extends Backbone.View
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Let the boudaries or markup be the limits of what a component touches, and code it so it works stand-alone.
 </p>
 
@@ -332,7 +332,7 @@ class NewBookView extends Backbone.View
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Speaking of tests, DOM isolation will allow you to test most of a component without writing <strong>browser tests</strong>. Those are the gnarly, slow tests that everyone’s afraid of. The tests that ensure the <strong>logic</strong> behind your views and how they interact with your data is sound will run very fast, and they’ll be a lot more numerous than your browser tests, all things being well planned. Mind you, browser tests are necessary, but you’re better off isolating them from the rest, and perhaps running it off your normal testing cycle with a CI server.
 </p>
 

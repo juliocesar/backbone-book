@@ -4,19 +4,19 @@
   Models, collections <span class="amp">&amp;</span> data
 </h1>
 
-<p class="mark">
+<p>
   Although models may reflect logic that’s on the server, they’re not meant to mirror all of it. Replicating every relation and validation that exists on the other side is time wasted. It may come down to that, but there’ll be a use case on the client app to justify it, or it’s useless.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Don’t clutter models with a lot of methods for rendering attributes in different ways, human-friendly, different date formats, and so on. Write a presenter object that's separate from the model, which you can pass the model to it's methods and it’ll handle that for you. Then pass that presenter to the view (more on that in the <a>views</a> chapter).
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Views will listen to attribute changes that happen on your models, so plan accordingly as you'll be listening to changes in specific attributes. For example, it’s fine having an attribute in <code>Book</code> called <code>paid</code> that’s stale, as in it exists only on the client side (the server knows it’s paid because there's an associated payment entry). So just setting <code>paid</code> to <code>true</code> re-renders whatever view associated itself with this model and renders an appropriate template that shows that this thing is paid for.
 </p>
 
@@ -32,7 +32,7 @@
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Most apps communicate with a server using HTTP with a RESTful API. So the API URLs are of summary importance. Don't scatter them around the app. Write a module named <code>apiUrl</code> which exports a function with the same name. That module acts like a catalog of URLs, and model or collection that talks with the API has to require it. It looks like this:
 </p>
 
@@ -60,7 +60,7 @@ apiUrl = (type, args...) ->
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Data associations are easy to solve without plugins <strong>if the server API is sane</strong>, so it’s worth making it so otherwise your data layer will absorb your API’s ugliness and amplify it by one hundred. Assume we have authors for those books I spoke of, and when fetching an author, I want to grab their books along. Say the API looks like this:
 </p>
 
@@ -80,7 +80,7 @@ apiUrl = (type, args...) ->
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Loading associated data (one to many) is trivial once you think for a second about what makes sense. Assume you have this URL in your app:
 </p>
 
@@ -117,7 +117,7 @@ apiUrl = (type, args...) ->
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   The best way to handle pagination is by using  <a href="http://tools.ietf.org/html/rfc5988">link headers</a> (<a href="http://developer.github.com/v3/">GitHub’s API uses it</a>). To be clear: pagination doesn’t imply in your necessarily having <strong>pages</strong> of information. You could use this for infinite scrolling, or that. How you present it goes beyond what your collection needs to worry about.
 </p>
 
@@ -143,7 +143,7 @@ apiUrl = (type, args...) ->
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   The concept of a full/partial model is handy for cases where the server API emits “light” representations of models. Like in the case above, getting a list of books for an author, it’s quite likely that you’ll want to render a list and then when a user clicks an entry, you fetch and show the full book.
 </p>
 
@@ -180,7 +180,7 @@ class PartialModel extends Backbone.Model
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Where and when you instance your collections has to be consistent with the data strategy you conceive. It seems popular to, on every route (when a URL is visited), you instance a collection, fetch data for it, pass it to a view and render it. But that pattern leaves out something you'll want 90% of the time, which is <strong>not</strong> discarding data you have already have.
 </p>
 
@@ -198,7 +198,7 @@ class PartialModel extends Backbone.Model
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Backbone Collections are really smart in how they handle data. By default, they won't allow duplicate IDs, and if you re-add an existing model, you can pass <a href="http://backbonejs.org/#Collection-add">an option</a> to <code>add()</code> which will get the collection to merge the attributes with the current model living in the collection.
 </p>
 

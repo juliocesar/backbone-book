@@ -2,66 +2,66 @@
 
 <h1>Overview and bullshit-dispelling</h1>
 
-<p class="mark">
+<p>
   You have models and collections (the data layer), views (or controllers, name it as you will), and URLs. As is with nearly every other popular framework or library of this kind.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   The rule of thumb is get the hell away from the DOM. You won’t read from it ever (e.g.: getting an element’s class name, or the length of a list counts as that), because your data layer knows what has what value and in what state anything is at at any given time. You’ll write to the DOM only by rendering views. If you like this approach, it’s totally ok to use just regular JS or jQuery.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Small modules built outside of Backbone (read: are not a model/view/router) <strong>are ok</strong>. So long as they perform <strong>one</strong> function and are clear in what they in turn require, it’s all good.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Common architecture mistakes involve getting one or more of the previous statements wrong, bending the rules “a little”, or however else you excuse it.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   This is what every JavaScript framework powered app does most of the time: they get views to track changes in data, and re-render the associated view(s) in more or less granular fashion.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   It’s entirely possible to make stupid mistakes with any framework. To say one is less prone to idiocy than the other is an attempt at misguiding you. Every popular framework provides tools for data handling, presentation, and URLs. It’s up to you to know how to use that effectively.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   The goal is creating a fast, beautiful, and maintainable build, and that’s achieved by doing things right through the entire stack (so HTML and CSS too), as well as a great design, and not just the application logic. No tool will save you from that fact. Citing an app as evidence of a framework “being better” conveniently leaves this out, which means it’s a cheap attempt at selling it to you.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Pick a tool and go with it. Stop asking questions such as “Is Angular better than Backbone?”. It’s a huge waste of time even thinking about it until you’re well into a handful of apps and made <strong>a lot</strong> of mistakes which you learned from.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   You can create patterns on top of Backbone once you mastered it. A lot of projects out there consist of that, like <a href="https://github.com/chaplinjs/chaplin">Chaplin</a>. Though most of the time you’ll get away without needing any of that.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Sadly, you don’t need a license stating that you’re capable of using functions and modules correctly before you’re legally allowed to use OOP. Throughout this booklet I’ll refer to modules many times because it’s the best way to structure your code. Read about <a href="http://browserify.org/">browserify</a> and learn it.
 </p>
 
 <%= partial :- %>
 
-<p class="mark">
+<p>
   Think twice before adding a plugin. It doesn’t matter how awesome your favourite website says it is. $10 says they never used it themselves. Hell is other people’s code, and the way to it is paved by assumptions that shit just works. <strong>Really</strong> try to solve the problem first. You’ll get good at that, and then nothing will stop you.
 </p>
