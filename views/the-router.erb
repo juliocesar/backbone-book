@@ -1,7 +1,7 @@
 <% @title = 'The router' %>
 
 <h1>
-  The router
+  Routing and controllers
 </h1>
 
 <p>
@@ -140,7 +140,95 @@ class Router extends Backbone.Router
 <%= partial :- %>
 
 <p>
-  See ref in " I’ll explain this refactor further ahead in the router chapter" (models).
+  On scaling and refactoring controllers, earlier in the <a href="/models-collections-and-data">Models, collections <span class="amp">&amp;</span> data</a> chapter I've described a repetitive data loading pattern. Mind the refactoring steps:
+</p>
+
+<pre><code># View books screen controller
+# ============================
+#
+# This uses a global `authors` collection which the controller
+# either needs to require or is available in `window`.
+
+# Container where the view will be rendered.
+$container = $ '.some-container'
+
+viewBooksController = (authorId) ->
+  author = authors.get authorId
+  if author?
+    # Author exists in the collection. Keep moving.
+    view = new BookList collection: author.books
+    $container.empty().append view.render().el
+    author.books.fetch()
+  else
+    # Author isn't in the collection. Fetch it
+    # before rendering a collection.
+    author = new Author id: authorId
+    author.fetch success: =>
+      # Add the author to the global collection.
+      authors.add author
+      view = new BookList collection: author.books
+      $container.empty().append view.render().el
+      author.books.fetch()</code></pre>
+
+<p>
+  Note how we're rendering the <code>BookList</code> view before even fetching . The idea is as soon as <code>author.books.fetch()</code> is called, the collection will trigger a <code>request</code> event which the instance of <code>BookList</code> can <code>listenTo</code> and display a loading indicator. When fetch completes, it'll fire <code>sync</code>, and we can then re-render this view with actual books in it.
+</p>
+
+<p>
+  But this is still awful repetitive:
+</p>
+
+<pre><code># View books screen controller
+# ============================
+#
+# This uses a global `authors` collection which the controller
+# either needs to require or is available in `window`.
+
+# Container where the view will be rendered.
+$container = $ '.some-container'
+
+# Renders the appropriate view using a books collection,
+# and then calls fetch() on it.
+renderAndFetchBooks = (collection, $container) ->
+  view = new BookList collection: collection
+  $container.empty().append view.render().el
+  author.books.fetch()
+
+# The controller itself. This is what gets exported.
+viewBooksController = (authorId) ->
+  author = authors.get authorId
+  if author?
+    renderAndFetchBooks author.books, $container
+  else
+    # Author isn't in the collection. Fetch it
+    # before rendering a collection.
+    author = new Author id: authorId
+    author.fetch success: =>
+      # Add the author to the global collection.
+      authors.add author
+      renderAndFetchBooks author.books, $container</code></pre>
+
+<p>
+  The latter is <strong>much better</strong>. The controller code itself is now reduced to pretty much the high level logic. But we'll need to handle our app getting a <code>404</code> back when requesting an author. Adding this last leg should be trivial:
+</p>
+
+<pre><code># …
+
+renderNotFound = (author) ->
+  view = new AuthorNotFound model: author
+  $container.empty().append view.render().el
+
+# And where we call author.fetch()…
+author.fetch
+  success: =>
+    authors.add author
+    renderAndFetchBooks author.books, $container
+  error: (model, xhr) =>
+    if xhr.status is 404
+      renderNotFound author</code></pre>
+
+<p>
+  Ideally no single module of the codebase should grow too large or too complex, but the gist here is doing this stuff away from the router is a huge win. Follow this pattern and you'll no longer be looking at overly complex routers.
 </p>
 
 <%= partial :- %>
