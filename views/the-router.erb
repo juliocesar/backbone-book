@@ -1,0 +1,138 @@
+<% @title = 'The router' %>
+
+<h1>
+  The router
+</h1>
+
+<p>
+  For the vast majority of cases, we want users to navigate through the app, and for the user to be able to go back to the screen they were using the browser history (back/forward buttons). These screens are, technically, <strong>states</strong> of the app: “new book form visible”, “viewing a list of books I own”, “browsing a book”, and so on.
+</p>
+
+<p>
+  As to what screen changes warrant a state, it depends on how granular you want the user experience to be. For instance, you may decide to show the new book form in place, perhaps right above my list of books, and not have a dedicated URL for it. Or maybe there’s a large volume of information to be filled in it and you’d like to avoid cluttering the screen and it makes more sense for that form to live in a screen of it's own.
+</p>
+
+<p>
+  The implication here is that while common sense (and known patterns) will provide great guidelines when it comes to deciding that, without taking UX into consideration, <strong>there are no absolutes</strong>. Backbone, like Ember or Angular, will give you a tool for creating state (URLs). Choosing what's appropriate is up to you and what you're building.
+</p>
+
+<p>
+  Hence if and where you choose to have state in your app, you’ll need to use the router for constructing the UI. The low-level logic for doing all that won't live in the router itself of course. Instead, it'll fetch data using models/collections, and it’ll instance and render views to display the data. In a gist: it's <strong>with</strong> the router that you'll “assemble” your application where state applies.
+</p>
+
+<%= partial :- %>
+
+<p>
+  <code>Backbone.Router</code> fires a function when a certain URL pattern is visited. Which means you can keep this function elsewhere and just pass it by reference to a URL pattern, avoiding declaring the actual URL logic in the router file.
+</p>
+
+<p>
+  This has the added bonus of making testing a lot easier, perhaps foregoing all need for testing the router itself.
+</p>
+
+<p>Assume you have the following router declared:</p>
+
+<pre><code># Application router
+# ==================
+
+class Router extends Backbone.Router
+  routes:
+    'books':     'allBooksScreen'
+    'books/:id': 'bookScreen'
+
+  allBooksScreen: ->
+    # Fetch all books and render a list with them.
+
+  bookScreen: (id) ->
+    # Fetch book with `id` and render it.</code></pre>
+
+<p>
+  The class above will get very extensive very quickly. The solution some adopt is having multiple routers, one for each topic part of the application, but while that addresses the problem of having one long router file, it fails to tackle the problem of separation of concerns: the router is doing it's job so long as it dispatches a function when a URL is visited. What that function does, however, can live outside of it.
+</p>
+
+<p>
+  In MVC frameworks such as Rails, the router matches HTTP requests to a function in a controller class, which is called to handle the request. And what the example above has done is in a way just that: the method <code>bookScreen</code> above is a controller, except that it’s declared directly in the router.
+</p>
+
+<p>
+  But we could and should be declaring them outside. Like so:
+</p>
+
+<pre><code># View book screen controller
+# ===========================
+#
+# Declared in a separate file, such as
+# javascripts/controllers/view-book-controller.coffee.
+
+viewBookController = (id) ->
+  # Check a collection to see if book with id `id` exists,
+  # and if not instance a new one and fetch it.
+
+# Export viewBookController.</code></pre>
+
+<p>
+  And then in the router:
+</p>
+
+<pre><code># Application router
+# ==================
+
+# Alternatively, made available in the `window` scope. With browserify,
+# load it like so:
+viewBookController = require 'view-book-controller'
+
+class Router extends Backbone.Router
+  routes:
+    'books/:id': viewBookController
+
+  # ...</code></pre>
+
+<p>
+  This pattern has the <strong>huge</strong> benefit of making it possible to test what happens when a user goes to a certain URL <strong>outside</strong> of browser testing. All you need to do is load the controller module, and call it passing whatever parameters it expects (in the example above, you'd pass the <code>id</code> of a mocked instance of <code>Book</code>).
+</p>
+
+<p>
+  Another benefit is as a controller grows complex, it can have it's own dependencies and module-specific methods which the router doesn't need to know about. So you're scaling controllers separately, as you should.
+</p>
+
+<%= partial :- %>
+
+<p>
+  You may have a mix of public and private content in your application. Which means you'll need to “protect” certain screens from users who aren't logged in. I don't mean to imply your security model should rely on the app not rendering a form that lets users access data they otherwise shouldn't be able to see. The server enforce that and your API should respond with an appropriate status if I request private information without authentication.
+</p>
+
+<p>
+  But we need to handle that gracefully, and possibly present the user with a login screen or at least some notice saying the screen/data is unavailable, and the right place to put that kind of logic is in the router.
+</p>
+
+<p>
+  A simple user authentication pattern works by declaring a method named <code>requireLogin</code>. We then nest in a callback argument anything that's meant to happen on a successful login:
+</p>
+
+<pre><code>class Router extends Backbone.Router
+  routes:
+    'books/:id': viewBookController
+
+  requireLogin: (callback) ->
+    if user.isLoggedIn()
+      callback()
+    else
+      alert "Login required! Please sign in first."
+      @navigate '/login', trigger: yes</code></pre>
+
+<p>
+  And from inside <code>viewBookController</code>:
+</p>
+
+<pre><code>viewBookController = (id) ->
+  @requireLogin ->
+    # Build the UI here, which will happen only
+    # if `user.isLoggedIn()` is true.</code></pre>
+
+<p>
+  Because <code>viewBookController</code> is invoked from the context of the <code>Router</code> instance, any methods declared in the router will be available via the <code>@</code> (or <code>this</code>) notation.
+</p>
+
+<p>
+  The <code>user</code> object you're seeing in the router would be a user model the router has access to either via a global or a module it required, representing the current user browsing the app.
+</p>
