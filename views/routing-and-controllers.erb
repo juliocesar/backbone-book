@@ -1,19 +1,19 @@
-<% @title = 'The router' %>
+<% @title = 'Routing & controllers' %>
 
 <h1>
   Routing <span class="amp">&amp;</span> controllers
 </h1>
 
 <p>
-  For the vast majority of cases, we want users to navigate through the app, and for the user to be able to go back to the screen they were using the browser history (back/forward buttons). These screens are, technically, <strong>states</strong> of the app: “new book form visible”, “viewing a list of books I own”, “browsing a book”, and so on.
+  For the vast majority of cases, we want users to navigate through the app, and for the user to be able to go back to the screen they were using the browser history (back/forward buttons). These screens are in reality <strong>states</strong> of the app: “new book form visible”, “viewing a list of books I own”, “browsing a book”, and so on, are examples of possible states that the UI is in.
 </p>
 
 <p>
-  As to what screen changes warrant a state, it depends on how granular you want the user experience to be. For instance, you may decide to show the new book form in place, perhaps right above my list of books, and not have a dedicated URL for it. Or maybe there’s a large volume of information to be filled in it and you’d like to avoid cluttering the screen and it makes more sense for that form to live in a screen of it's own.
+  As to what screen changes warrant a state, it depends on how granular you want the user experience to be. For instance, you may decide to show the new book form in place, perhaps right above my list of books, and not have a dedicated URL (or a page) for creating new books. Or maybe there’s a large volume of information to be filled in it and you’d like to avoid cluttering the screen, so it makes more sense for that form to live in a screen of it's own.
 </p>
 
 <p>
-  The implication here is that while common sense (and known patterns) will provide great guidelines when it comes to deciding that, without taking UX into consideration, <strong>there are no absolutes</strong>. Backbone, like Ember or Angular, will give you a tool for creating state (URLs). Choosing what's appropriate is up to you and what you're building.
+  The point is that while common sense (and known patterns) will provide great guidelines when it comes to deciding that, without taking UX into consideration, <strong>there are no absolutes</strong>. Backbone, like Ember or Angular, will give you a tool for creating screen states with URLs. Choosing what's appropriate is up to you and what you're building.
 </p>
 
 <p>
@@ -23,11 +23,11 @@
 <%= partial :- %>
 
 <p>
-  <code>Backbone.Router</code> fires a function when a certain URL pattern is visited. Which means you can keep this function elsewhere and just pass it by reference to a URL pattern, avoiding declaring the actual URL logic in the router file.
+  <code>Backbone.Router</code> fires a function when a certain URL pattern is visited. And since functions are objects which can be passed around as a variable, this means you can declare it elsewhere and assign it to a URL pattern through the <code>routes</code> object, avoiding declaring the actual URL logic in the router file.
 </p>
 
 <p>
-  This has the added bonus of making testing a lot easier, perhaps foregoing all need for testing the router itself.
+  This has the added bonus of making testing a lot easier, perhaps foregoing most of the need for testing the router itself in favour of simply testing these functions.
 </p>
 
 <p>Assume you have the following router declared:</p>
@@ -47,7 +47,7 @@ class Router extends Backbone.Router
     # Fetch book with `id` and render it.</code></pre>
 
 <p>
-  The class above will get very extensive very quickly. The solution some adopt is having multiple routers, one for each topic part of the application, but while that addresses the problem of having one long router file, it fails to tackle the problem of separation of concerns: the router is doing it's job so long as it dispatches a function when a URL is visited. What that function does, however, can live outside of it.
+  As each method that handles a route gets more complex, the router will end up very complex very quickly, and it alone will be the container of way too application logic. The solution some adopt is using multiple routers, one for each topic part of the application, but while that addresses the problem of having a long router file, it fails to tackle the problem of separation of concerns: the router is doing it's job so long as it dispatches a function when a URL is visited. What that function does, however, can live outside of it.
 </p>
 
 <p>
@@ -88,53 +88,11 @@ class Router extends Backbone.Router
   # ...</code></pre>
 
 <p>
-  This pattern has the <strong>huge</strong> benefit of making it possible to test what happens when a user goes to a certain URL <strong>outside</strong> of browser testing. All you need to do is load the controller module, and call it passing whatever parameters it expects (in the example above, you'd pass the <code>id</code> of a mocked instance of <code>Book</code>).
+  This pattern has the <strong>huge</strong> benefit of making it possible to test what happens when a user goes to a certain URL <strong>completely outside</strong> of browser testing. All you need to do is load the controller module, and call it passing whatever parameters it expects (in the example above, you'd pass the <code>id</code> of a mocked instance of <code>Book</code>, for example).
 </p>
 
 <p>
   Another benefit is as a controller grows complex, it can have it's own dependencies and module-specific methods which the router doesn't need to know about. So you're scaling controllers separately, as you should.
-</p>
-
-<%= partial :- %>
-
-<p>
-  You may have a mix of public and private content in your application. Which means you'll need to “protect” certain screens from users who aren't logged in. I don't mean to imply your security model should rely on the app not rendering a form that lets users access data they otherwise shouldn't be able to see. The server enforce that and your API should respond with an appropriate status if I request private information without authentication.
-</p>
-
-<p>
-  But we need to handle that gracefully, and possibly present the user with a login screen or at least some notice saying the screen/data is unavailable, and the right place to put that kind of logic is in the router.
-</p>
-
-<p>
-  A simple user authentication pattern works by declaring a method named <code>requireLogin</code>. We then nest in a callback argument anything that's meant to happen on a successful login:
-</p>
-
-<pre><code>class Router extends Backbone.Router
-  routes:
-    'books/:id': viewBookController
-
-  requireLogin: (callback) ->
-    if user.isLoggedIn()
-      callback()
-    else
-      alert "Login required! Please sign in first."
-      @navigate '/login', trigger: yes</code></pre>
-
-<p>
-  And from inside <code>viewBookController</code>:
-</p>
-
-<pre><code>viewBookController = (id) ->
-  @requireLogin ->
-    # Build the UI here, which will happen only
-    # if `user.isLoggedIn()` is true.</code></pre>
-
-<p>
-  Because <code>viewBookController</code> is invoked from the context of the <code>Router</code> instance, any methods declared in the router will be available via the <code>@</code> (or <code>this</code>) notation.
-</p>
-
-<p>
-  The <code>user</code> object you're seeing in the router would be a user model the router has access to either via a global or a module it required, representing the current user browsing the app.
 </p>
 
 <%= partial :- %>
@@ -175,7 +133,7 @@ viewBooksController = (authorId) ->
 </p>
 
 <p>
-  But this is still awful repetitive:
+  But this is still awfully repetitive:
 </p>
 
 <pre><code># View books screen controller
@@ -209,7 +167,7 @@ viewBooksController = (authorId) ->
       renderAndFetchBooks author.books, $container</code></pre>
 
 <p>
-  The latter is <strong>much better</strong>. The controller code itself is now reduced to pretty much the high level logic. But we'll need to handle our app getting a <code>404</code> back when requesting an author. Adding this last leg should be trivial:
+  The latter is <strong>much better</strong>. The controller code itself is now reduced to pretty much the high level logic. But we'll need to handle our app getting a <code>404</code> back when requesting an author. Adding this last bit should be trivial:
 </p>
 
 <pre><code># …
@@ -234,6 +192,167 @@ author.fetch
 <%= partial :- %>
 
 <p>
-  Explain in more detail the data loading explained in models, "Where and when you instance your collections"...
+  You may have a mix of public and private content in your application. Which means you'll need to “protect” certain screens from users who aren't logged in. I don't mean to imply your security model should rely on the app not rendering a form that lets users access data they otherwise shouldn't be able to see. The server should enforce consistency and your API should respond with an appropriate status if I request private information without authentication.
 </p>
 
+<p>
+  But we need to handle that gracefully, and possibly present the user with a login screen or at least some notice saying the screen/data is unavailable, and the right place to put that kind of logic is in the router.
+</p>
+
+<p>
+  A simple user authentication pattern works by declaring a method named <code>requireLogin</code>. We then nest in a callback argument anything that's meant to happen on a successful login:
+</p>
+
+<pre><code>class Router extends Backbone.Router
+  routes:
+    'books/:id': viewBookController
+
+  requireLogin: (callback) ->
+    if user.isLoggedIn()
+      callback()
+    else
+      alert "Login required! Please sign in first."
+      @navigate '/login', trigger: yes</code></pre>
+
+<p>
+  And from inside <code>viewBookController</code>:
+</p>
+
+<pre><code>viewBookController = (id) ->
+  @requireLogin ->
+    # Build the UI here, which will happen only
+    # if `user.isLoggedIn()` is true.</code></pre>
+
+<p>
+  Because <code>viewBookController</code> is invoked from the context of the <code>Router</code> instance, any methods declared in the router will be available via the <code>@</code> (or <code>this</code>) notation.
+</p>
+
+<p>
+  The <code>user</code> object you're seeing in the router would be a user model the router has access to either via a global or a module it required, representing the current user browsing the app.
+</p>
+
+<p>
+  A note: whenever it seems easier to bring a model into the router by creating concepts like <code>currentUser</code>, or <code>currentBook</code> for the book you're browsing, think twice. This means you're making that type of model a first class entity in your application. And while we could debate until we're blue in the face why a user deserves the spot and not a book when the app is a bookstore app, the fact is in the vast majority of software you write (including this example), you'll always have a user operating the application, regardless of said user being logged in or not.
+</p>
+
+<%= partial :- %>
+
+<p>
+  Earlier in the <a href="/models-collections-and-data">Models, collections &amp; data</a> chapter I briefly explained a strategy for data fetching where not discarding a collection, or rather not instancing a new one and fetching every time a route is visited is a good idea.
+</p>
+
+<p>
+  And as I explained earlier in this chapter, part of constructing the UI (the router's role) consists of fetching data which is then passed to a view for displaying. Creating a fast app has a lot to do with how smartly it does this in particular.
+</p>
+
+<p>
+  Staying within the example thus far, and to keep this simple let's just say this is a personal catalogue of books. At any given time I'll be dealing with <strong>one</strong> collection of books: the ones I own. I could instance a collection of books elsewhere in the app to handle that, possibly within the user object, and keep this data around for as long as the session goes on.
+</p>
+
+<p>
+  When logging in I get a list of books in my catalogue:
+</p>
+
+<pre><code># View my books controller
+# ========================
+
+# Presume a user object instanced elsewhere is passed
+# to this controller.
+user = require 'current-user'
+
+viewMyBooksController = ->
+
+  view = new ViewMyBooks collection: user.books
+  # Render the view. For a millisecond it won't
+  # have any books to render, which is fine.
+
+  # If there are no books my catalogue, try the
+  # server.
+  if user.books.isEmpty()
+
+    # Calling fetch here will trigger a request event,
+    # which ViewMyBooks should watch for and display
+    # feedback along the lines of saying
+    # “Loading your books…”.
+    user.books.fetch()
+
+  else
+
+    # Probably visited this screen before and books
+    # were loaded, so trigger an event which the view
+    # is watching to tell it to just render the books.
+    user.books.trigger 'reset'</code></pre>
+
+<p>
+  With that, when navigating away from this screen and back to it, it'll seem as if my catalogue of books just rendered instantly. But for instance, if this screen loads only the 20 newest books introduced to my catalogue, and elsewhere in the screen the app displays a link to an older book of mine because someone left a comment in it.
+</p>
+
+<p>
+  Here's the overly commented out flow:
+</p>
+
+<pre><code># View single book controller
+# ===========================
+
+user = require 'current-user'
+
+viewSingleBookController = (bookId) ->
+
+  if model = user.books.get bookId
+
+    # We fetched this model before, so give it to the
+    # view and display it.
+    view = new ViewSingleBook model: model
+    # Render the view…
+
+  else
+
+    # The model doesn't exist in the collection. Instance
+    # a new object to receive it when we fetch it, and hand
+    # it “hollow” to the view, which will know what to display
+    # when a model has no attributes yet.
+    model = new Book id: bookId
+    view = new ViewSingleBook model: model
+    # Render the view…
+
+    # Now fetch the book. This will trigger a “request”
+    # event, which we can use to give the user feedback on
+    # the fact it's being fetched.
+    model.fetch success: =>
+
+      # Fetched successfully, add to the collection.
+      user.books.add model
+
+      # No further action required here as when the model
+      # was fetched, it fired a “sync” event, which forced
+      # the view to re-render, thus displaying the model
+      # with all it's attributes.</code></pre>
+
+<p>
+  In a gist, what this controller does is if it finds that a book is already in the user's catalogue collection, it hands it to the appropriate view and gets it to render it, otherwise it fetches it first, adds to the catalogue, and then renders it. So now if I navigate away from this book's page and back to it, it'll also render it instantly.
+</p>
+
+<p>
+  There are a few caveats to this approach: there's a clear buildup of data happening on the client, but before you think the app will explode with a mere thousand entries even, things aren't as grim as that. Still, you may want to expire and remove data from the collection from time to time, and/or under certain circumstances such as the server sending a specific header saying the collection has changed. This should be handled by the collection object itself though, and not by the router. Be <strong>extra</strong> mindful about this if the app is designed for mobiles, since unlike most desktop apps where people will close a tab and come back to it later, they'll probaly stay running in the background, so the data buildup won't go away.
+</p>
+
+<p>
+  Last, keeping things in memory is a form of caching. You may be displaying stale data for a book, so the process will have to be smarter than merely checking whether a book exists in memory. One <strong>very</strong> simple yet effective approach is to do the following:
+</p>
+
+<pre><code># Skipping to the part where we grab the book …
+if model = user.books.get bookId
+
+  # We fetched this model before, so give it to the
+  # view and display it.
+  view = new ViewSingleBook model: model
+  # Render the view…
+
+  # Call fetch to ensure we have the latest data. When
+  # fetch completes, the UI will be re-rendered since
+  # we're watching for “sync” events in it.
+  model.fetch()</code></pre>
+
+<p>
+  This re-rendering of the view should then display the updated data, and of course, for good UX sake a near-instant update is better than a slow one, but you can mitigate that by displaying a progress indicator somewhere so the user knows it's looking for data in the server. In the meantime, the user is given something to work with, which in the likelihood of it not being stale data, it'll be all that they need.
+</p>
