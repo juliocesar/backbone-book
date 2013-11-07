@@ -11,8 +11,24 @@
     <script src="//use.typekit.net/yrp6jrp.js"></script>
     <script>try{Typekit.load();}catch(e){}</script>
   </head>
-  <body class="language-coffeescript <%= @class ? @class : "chapter" %>">
+  <body class="<%= @class ? @class : "chapter" %>">
     <%= yield %>
   </body>
   <%= javascript_tag 'prism' %>
+  <script>
+    (function(d) {
+      var languages = ['coffeescript', 'javascript]'];
+      d.body.classList.add('language-' + languages[0]);
+      d.addEventListener("keypress", function(event) {
+        if (!event.keyCode === 115) return;
+        if (d.body.classList.contains('language-coffeescript')) {
+          d.body.classList.remove('language-coffeescript');
+          d.body.classList.add('language-javascript');
+        } else {
+          d.body.classList.remove('language-javascript');
+          d.body.classList.add('language-coffeescript');
+        }
+      }, false);
+    })(document);
+  </script>
 </html>
