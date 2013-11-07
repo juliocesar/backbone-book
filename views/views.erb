@@ -31,7 +31,11 @@
     @</code></pre>
 
 <p>
-  Rendering should be a <strong>destructive operation</strong> as far as what’s in the container element goes. Calling <code>render</code> by itself never appends anything to the DOM. Instead, it should just clear what’s in the the component element and render the template in again (it’s what happens when you call <code>@$el.html()</code> passing a rendered template object to it) .
+  Rendering should be a <strong>destructive operation as far as what’s in the container element goes</strong>. Calling <code>render</code> by itself should neve append anything to the DOM. Instead, it should just clear what’s in the the component element and render the template in again (it’s what happens when you call <code>@$el.html()</code> passing a rendered template object to it).
+</p>
+
+<p>
+  A good test for this is whether calling <code>render</code> repeatedly on any view breaks it or something else. It <strong>shouldn't</strong>.
 </p>
 
 <%= partial :- %>
@@ -206,8 +210,11 @@ class BookPresenter extends ModelPresenter
 
 <pre><code>render: ->
   presenter = new BookPresenter model: @model
-  @$el.remove()
-  @setElement @template presenter
+  newEl = @template presenter
+  if @el.tagName is newEl.tagName
+    @$el.html newEl.innerHTML
+  else
+    @setElement newEl
   @</code></pre>
 
 <p>
@@ -231,6 +238,10 @@ class BookPresenter extends ModelPresenter
 <pre><code>%li.book-list-entry
   %h1= @title
   ...</code></pre>
+
+<p>
+  Bear in mind you may need to copy more than just the markup from <code>newEl</code>, but also it's <code>class</code> attribute.
+</p>
 
 <%= partial :- %>
 
