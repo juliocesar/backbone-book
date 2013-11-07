@@ -210,11 +210,11 @@ class BookPresenter extends ModelPresenter
 
 <pre><code>render: ->
   presenter = new BookPresenter model: @model
-  newEl = @template presenter
-  if @el.tagName is newEl.tagName
-    @$el.html newEl.innerHTML
+  $newEl = $(@template presenter)
+  if @$el[0].tagName is $newEl[0].tagName
+    @$el.html $newEl.html()
   else
-    @setElement newEl
+    @setElement $newEl
   @</code></pre>
 
 <p>
