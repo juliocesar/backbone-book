@@ -24,11 +24,19 @@
   Before you cry that Backbone will always send every model attribute to the server when you <code>save()</code>, the solution is simple: declare a list of stale attributes (they're likely gonna be lesser in number than the others), and omit them from what gets sent by overriding <code>toJSON()</code>:
 </p>
 
-<pre><code>class Book extends Backbone.Model
+<pre class="language-coffeescript"><code>class Book extends Backbone.Model
   stale: ['paid']
 
   toJSON: ->
     _.omit @attributes, @stale</code></pre>
+
+<pre class="language-javascript"><code>var Book = Backbone.Model.extend({
+  stale: ['paid'],
+
+  toJSON: function() {
+    return _.omit(@attributes, @stale);
+  }
+});</code></pre>
 
 <%= partial :- %>
 
