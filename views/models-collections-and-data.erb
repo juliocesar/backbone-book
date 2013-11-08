@@ -34,7 +34,7 @@
   stale: ['paid'],
 
   toJSON: function() {
-    return _.omit(@attributes, @stale);
+    return _.omit(this.attributes, this.stale);
   }
 });</code></pre>
 
