@@ -18,15 +18,19 @@
   <script>
     (function(d) {
       var languages = ['coffeescript', 'javascript]'];
-      d.body.classList.add('language-' + languages[0]);
+      var selected = localStorage['language'];
+      if (!selected) selected = 'coffeescript'
+      d.body.classList.add('language-' + selected);
       d.addEventListener("keypress", function(event) {
         if (!event.keyCode === 115) return;
         if (d.body.classList.contains('language-coffeescript')) {
           d.body.classList.remove('language-coffeescript');
           d.body.classList.add('language-javascript');
+          localStorage['language'] = 'javascript';
         } else {
           d.body.classList.remove('language-javascript');
           d.body.classList.add('language-coffeescript');
+          localStorage['language'] = 'coffeescript';
         }
       }, false);
     })(document);
