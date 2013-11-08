@@ -18,7 +18,7 @@
   If the data changed, just re-render the view. What you <strong>can</strong> do, however, is make <code>render</code> more complex to accommodate use cases such as, for example, a model is currently being edited and you don’t want to destroy the form when the user is half-way through it. For example:
 </p>
 
-<pre><code>class BookListView extends Backbone.View
+<pre class="language-coffeescript"><code>class BookListView extends Backbone.View
   template: JST['books/list_entry']
 
   # ...
@@ -29,6 +29,22 @@
         return false
     @$el.html @template @model
     @</code></pre>
+
+<pre class="language-javascript"><code>var BookListView = Backbone.View.extend({
+  template: JST['books/list_entry'],
+
+  // ...
+
+  render: function() {
+    if (this.model.get('editing')) {
+      if (!confirm("Model has been modified. Discard changes?")) {
+        return false;
+      }
+    }
+    this.$el.html(@template(this.model));
+    return this;
+  }
+});</code></pre>
 
 <p>
   Rendering should be a <strong>destructive operation as far as what’s in the container element goes</strong>. Calling <code>render</code> by itself should never append anything to the DOM. Instead, it should just clear what’s in the the component element and render the template in again (it’s what happens when you call <code>@$el.html()</code> passing a rendered template object to it).
@@ -77,7 +93,7 @@
   You could write a generic presenter object like this:
 </p>
 
-<pre><code># A generic presenter object for Backbone.Model
+<pre class="language-coffeescript"><code># A generic presenter object for Backbone.Model
 # =============================================
 
 class ModelPresenter
@@ -91,11 +107,26 @@ class ModelPresenter
   partial: (template) ->
     template _.extend @, @model.attributes</code></pre>
 
+<pre class="language-javascript"><code>// A generic presenter object for Backbone.Model
+// =============================================
+
+// presenter = new ModelPresenter({model: model});
+var ModelPresenter = function(options) {
+  var options = options ? options : {};
+  this.model = options.model;
+}
+
+// Pass a template object and it’ll output it with the presenter’s
+// model attributes.
+ModelPresenter.prototype.partial = function(template) {
+  return template(_.extend(this, this.model.attributes));
+}</code></pre>
+
 <p>
   Then for any particular case, subclass it and add more specific methods:
 </p>
 
-<pre><code># A presenter for the Book model
+<pre class="language-coffeescript"><code># A presenter for the Book model
 # ==============================
 
 class BookPresenter extends ModelPresenter
@@ -105,11 +136,24 @@ class BookPresenter extends ModelPresenter
   isReturned: ->
     @model.get('paid') and @model.get('returned')</code></pre>
 
+<pre class="language-javascript"><code>// A presenter for the Book model
+// ==============================
+
+var BookPresenter = _.extend(ModelPresenter.prototype, {
+  isPaid: function() {
+    return !!this.model.get('paid');
+  },
+
+  isReturned: function() {
+    return this.model.get('paid') && this.model.get('returned');
+  }
+});</code></pre>
+
 <p>
   In the corresponding view, instead of passing the model or the model’s attributes directly to a template, create a new presenter and pass it instead, like so:
 </p>
 
-<pre><code>class BookListView extends Backbone.View
+<pre class="language-coffeescript"><code>class BookListView extends Backbone.View
   template: JST['books/list_entry']
 
   # ...
@@ -119,27 +163,43 @@ class BookPresenter extends ModelPresenter
     @$el.html @template presenter
     @</code></pre>
 
+<pre class="language-javascript"><code>var BookListView = Backbone.View.extend({
+  template: JST['books/list_entry'],
+
+  // ...
+
+  render: function() {
+    var presenter = new BookPresenter({model: this.model});
+    this.$el.html(this.template(presenter))
+    return this;
+  }
+});</code></pre>
+
 <p>
   Now the template can be vastly simplified:
 </p>
 
-<pre><code>- if isPaid()
+<pre><code>- if @isPaid()
   = partial JST['books/paid_notice']
-- else if isReturned()
+- else if @isReturned()
   = partial JST['books/returned_notice']</code></pre>
 
 <p>
   Or you could go even further and make the <code>partial</code> method in <code>ModelPresenter</code> prettier, though then dependent on the <code>JST</code> object, which contains the templates, being present (pretty certain).
 </p>
 
-<pre><code>partial: (name) ->
+<pre class="language-coffeescript"><code>partial: (name) ->
   JST[name] _.extend(@, @model.attributes)</code></pre>
+
+<pre class="language-javascript"><code>partial: function(name) {
+  return JST[name](_.extend(this, this.model.attributes));
+}</code></pre>
 
 <p>
   You can now call partials like so:
 </p>
 
-<pre><code>- if isPaid()
+<pre><code>- if @isPaid()
   = partial 'books/paid_notice'</code></pre>
 
 <p>
@@ -178,17 +238,29 @@ class BookPresenter extends ModelPresenter
   So, <strong>this is correct</strong>:
 </p>
 
-<pre><code>class MyView extends Backbone.View
+<pre class="language-coffeescript"><code>class MyView extends Backbone.View
   initialize: ->
     @listenTo @model, 'change', @render</code></pre>
+
+<pre class="language-javascript"><code>var MyView = Backbone.View.extend({
+  initialize: function() {
+    this.listenTo(this.model, 'change', this.render);
+  }
+});</code></pre>
 
 <p>
   While <strong>this is wrong</strong>:
 </p>
 
-<pre><code>class MyView extends Backbone.View
+<pre class="language-coffeescript"><code>class MyView extends Backbone.View
   initialize: ->
     @model.on 'change', @render</code></pre>
+
+<pre class="language-javascript"><code>var MyView = Backbone.View.extend({
+  initialize: function() {
+    return this.model.on('change', this.render);
+  }
+});</code></pre>
 
 <p>
   In the former you’re declaring that the view needs to listen to events on the model, whereas the latter modifies the model itself and ties it forever to the view instance, even if you call <code>remove</code>, which means the memory for the view won’t be freed when you get rid of it.
@@ -208,7 +280,7 @@ class BookPresenter extends ModelPresenter
   What that means is the <code>render</code> method takes a hit in terms of how complex it ends, but it’s worth it for the sake of isolation.
 </p>
 
-<pre><code>render: ->
+<pre class="language-coffeescript"><code>render: ->
   presenter = new BookPresenter model: @model
   $newEl = $(@template presenter)
   if @$el[0].tagName is $newEl[0].tagName
@@ -217,21 +289,42 @@ class BookPresenter extends ModelPresenter
     @setElement $newEl
   @</code></pre>
 
+<pre class="language-javascript"><code>render: function() {
+  var presenter = new BookPresenter({model: this.model});
+  var $newEl = $(this.template(presenter));
+  if (this.$el[0].tagName === $newEl[0].tagName) {
+    this.$el.html($newEl.html());
+  } else {
+    this.setElement($newEl);
+  }
+  return this;
+}</code></pre>
+
 <p>
   Now instead of a template consisting of the view element’s <strong>contents</strong>, it will be a full representation of it. You can then drop this:
 </p>
 
-<pre><code>class BookListView extends Backbone.View
+<pre class="language-coffeescript"><code>class BookListView extends Backbone.View
   template: JST['books/list_entry']
   tagName: 'li'
   className: 'book-list-entry'</code></pre>
+
+<pre class="language-javascript"><code>var BookListView = Backbone.View.extend({
+  template: JST['books/list_entry'],
+  tagName: 'li',
+  className: 'book-list-entry'
+});</code></pre>
 
 <p>
   And go with this:
 </p>
 
-<pre><code>class BookListView extends Backbone.View
+<pre class="language-coffeescript"><code>class BookListView extends Backbone.View
   template: JST['books/list_entry']</code></pre>
+
+<pre class="language-javascript"><code>var BookListView = Backbone.View.extend({
+  template: JST['books/list_entry']
+});</code></pre>
 
 <p>With the template now containing the root element and it’s class name along:</p>
 
@@ -269,19 +362,30 @@ class BookPresenter extends ModelPresenter
   A simple model validation looks like this:
 </p>
 
-<pre><code># The book model
+<pre class="language-coffeescript"><code># The book model
 # ==============
 
 class Book extends Backbone.Model
-  validate: (attributes, options = {}) ->
+  validate: (attributes) ->
     if _.isBlank attributes.title
       "Title can't be empty" </code></pre>
+
+<pre class="language-javascript"><code>// The book model
+// ==============
+
+var Book = Backbone.Model.extend({
+  validate: function(attributes) {
+    if (_.isBlank(attributes.title)) {
+      return "Title can't be empty";
+    }
+  }
+});</code></pre>
 
 <p>
   The view looks like this (pretend we have an <code>attributesFrom</code> method which pulls text field values from a jQuery form element):
 </p>
 
-<pre><code># Component for creating a new book from a form
+<pre class="language-coffeescript"><code># Component for creating a new book from a form
 # =============================================
 
 class NewBookView extends Backbone.View
@@ -301,6 +405,30 @@ class NewBookView extends Backbone.View
       model.save()
       App.Books.add model</code></pre>
 
+<pre class="language-javascript"><code>// Component for creating a new book from a form
+// =============================================
+
+var NewBookView = Backbone.View.extend({
+  template: JST['books/new'],
+  events: {
+    'submit .new-book-form': 'submitForm'
+  },
+
+  submitForm: function(event) {
+    event.preventDefault();
+    var attributes = this.attributesFrom($(event.target));
+    var model = new Book(attributes);
+    if (!model.isValid()) {
+      // The error message will be in model.validationError. Ensure
+      // the template takes that into consideration.
+      this.render();
+    } else {
+      model.save();
+      App.Books.add(model);
+    }
+  }
+});</code></pre>
+
 <p>
   Handling validations for when editing a model is a lot easier, as it’s assumed that the model is already in a collection, so there’s no need to deal that. Just ensure you’re trapping the right event when re-rendering the view.
 </p>
@@ -309,7 +437,7 @@ class NewBookView extends Backbone.View
   Assuming <code>BookListView</code>’s template carries a form along to allow for in-place editing:
 </p>
 
-<pre><code>class BookListView extends Backbone.View
+<pre class="language-coffeescript"><code>class BookListView extends Backbone.View
   template: JST['books/list_entry']
   events:
     'submit .edit-book-form': 'submitForm'
@@ -318,6 +446,19 @@ class NewBookView extends Backbone.View
     @listenTo @model, 'change invalid', @render
 
   # ...</code></pre>
+
+<pre class="language-javascript"><code>var BookListView = Backbone.View.extend({
+  template: JST['books/list_entry'],
+  events: {
+    'submit .edit-book-form': 'submitForm'
+  },
+
+  initialize: function() {
+    this.listenTo(this.model, 'change invalid', this.render);
+  },
+
+  // ...
+});</code></pre>
 
 <p>
   As <code>change</code> won’t fire if the model is invalid, you’re declaring that when the model is made invalid, that the component should be rendered again. The template can then ensure the form is displayed with error messages on.
@@ -351,32 +492,55 @@ class NewBookView extends Backbone.View
   So avoid simple pitfalls like reading from the DOM. Always refer to a model/collection for the facts. You’re reading from the DOM when you do things like these:
 </p>
 
-<pre><code>togglePaid: ->
+<pre class="language-coffeescript"><code>togglePaid: ->
   if @$el.is '.paid'
     @model.set 'paid', no
 </code></pre>
+
+<pre class="language-javascript"><code>togglePaid: function() {
+  if (this.$el.is('.paid')) {
+    this.model.set('paid', false);
+  }
+}</code></pre>
 
 <p>
   Or:
 </p>
 
-<pre><code>isEmpty: ->
+<pre class="language-coffeescript"><code>isEmpty: ->
   if @$el.find('.books-list').length is 0
     # ...</code></pre>
+
+<pre class="language-javascript"><code>isEmpty: function() {
+  if (this.$el.find('.books-list').length === 0) {
+    // ...
+  }
+}</code></pre>
 
 <p>
   That’s useless, and now those views are tied not only to their model/collection, but to the DOM as well, for simple stuff that could be obtained from the data model:
 </p>
 
-<pre><code>togglePaid: ->
+<pre class="language-coffeescript"><code>togglePaid: ->
   @model.set 'paid', !model.get('paid')</code></pre>
+
+<pre class="language-javascript"><code>togglePaid: function() {
+  return this.model.set('paid', !model.get('paid'));
+}</code></pre>
 
 <p>
   And:
 </p>
 
-<pre><code>isEmpty: ->
-  if @collection.isEmpty()</code></pre>
+<pre class="language-coffeescript"><code>isEmpty: ->
+  if @collection.isEmpty()
+    # ...</code></pre>
+
+<pre class="language-javascript"><code>isEmpty: function() {
+  if (this.collection.isEmpty()) {
+    // ...
+  }
+}</code></pre>
 
 <p>
   Remember: keep the point of contact between a component and the DOM restricted to what goes on in <code>render</code> and to writing to it, never reading.
