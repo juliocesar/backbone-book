@@ -24,11 +24,19 @@
   Before you cry that Backbone will always send every model attribute to the server when you <code>save()</code>, the solution is simple: declare a list of stale attributes (they're likely gonna be lesser in number than the others), and omit them from what gets sent by overriding <code>toJSON()</code>:
 </p>
 
-<pre><code>class Book extends Backbone.Model
+<pre class="language-coffeescript"><code>class Book extends Backbone.Model
   stale: ['paid']
 
   toJSON: ->
     _.omit @attributes, @stale</code></pre>
+
+<pre class="language-javascript"><code>var Book = Backbone.Model.extend({
+  stale: ['paid'],
+
+  toJSON: function() {
+    return _.omit(this.attributes, this.stale);
+  }
+});</code></pre>
 
 <%= partial :- %>
 
@@ -36,7 +44,7 @@
   Most apps communicate with a server using HTTP with a RESTful API. So the API URLs are of summary importance. Don't scatter them around the app. Write a module named <code>apiUrl</code> which exports a function with the same name. That module acts like a catalog of URLs, and model or collection that talks with the API has to require it. It looks like this:
 </p>
 
-<pre><code># List of API URLs.
+<pre class="language-coffeescript"><code># List of API URLs.
 URLs =
   books: ->
     "/api/books"
@@ -50,13 +58,40 @@ URLs =
 apiUrl = (type, args...) ->
   URLs[type]? args...</code></pre>
 
+<pre class="language-javascript"><code>// List of API URLs.
+var URLs = {
+  books: function() {
+    return "/api/books";
+  },
+  book: function(id) {
+    return "/api/books/";
+  },
+  subscriptions: function(userId, id) {
+    return "/api/users/'+ userId +'/subscriptions/' + id;
+  }
+}
+
+// Helper for accessing the URL list. Think of it as something similar
+// to Rails' URL helpers.
+var apiUrl = function(type) {
+  return URLs[type] ?
+    URLs[type].call(this, [].slice.call(arguments, 1)) :
+    undefined;
+}</code></pre>
+
 <p>
   Then forever (no exceptions) refer to URLs by calling this module. In a <code>Book</code> model, it’d look like this:
 </p>
 
-<pre><code>class Book extends Backbone.Model
+<pre class="language-coffeescript"><code>class Book extends Backbone.Model
   url: ->
     apiUrl 'book', @id</code></pre>
+
+<pre class="language-javascript"><code>var Book = Backbone.Model.extend({
+  url: function() {
+    return apiUrl('book', this.id);
+  }
+});</code></pre>
 
 <%= partial :- %>
 
@@ -70,10 +105,17 @@ apiUrl = (type, args...) ->
   And by calling this URL I get the author object along with a <code>books</code> attribute which is an array of book objects, here’s how you’d do it:
 </p>
 
-<pre><code>class Author extends Backbone.Model
+<pre class="language-coffeescript"><code>class Author extends Backbone.Model
   initialize: ->
     @books = new Books @get('books'), url: apiUrl('author books', @id)</code></pre>
 
+<pre class="language-javascript"><code>var Author = Backbone.Model.extend({
+  initialize: function() {
+    this.books = new Books(
+      this.get('books'), { url: apiUrl('author books', this.id) }
+    );
+  }
+});</code></pre>
 <p>
   Now make sure from now on you refer to <strong>the collection</strong> (<code>author.books</code>) to access the values and not the container model attribute (<code>author.get 'books'</code>). The collection will contain the representation of what the author’s books are, and will ensure the book model instances are in sync with the server as you add, remove, or edit them.
 </p>
@@ -95,10 +137,10 @@ apiUrl = (type, args...) ->
 </p>
 
 <p>
-  Inside the method that’s called for that route, here’s how you’ll do it.
+  In the method that’s called for that route, here’s how you’ll do it.
 </p>
 
-<pre><code>showBooks: (authorId) ->
+<pre class="language-coffeescript"><code>showBooks: (authorId) ->
   author = App.Authors.get authorId
   if author?
     author.books.fetch success: =>
@@ -110,6 +152,30 @@ apiUrl = (type, args...) ->
       App.Authors.add author
       author.books.fetch success: =>
         # Render the view.</code></pre>
+
+<pre class="language-javascript"><code>showBooks: function(authorId) {
+  var author = App.Authors.get(authorId);
+  if (author) {
+    author.books.fetch({
+      success: function() {
+        var view = new BooksList({collection: author.books});
+        // Render the view.
+      }
+    );
+  } else {
+    author = new Author({id: authorId});
+    author.fetch({
+      success: function() {
+        App.Authors.add(author);
+        author.books.fetch({
+          success: function() {
+            // Render the view.
+          }
+        });
+      }
+    });
+  }
+}</code></pre>
 
 <p>
   I can hear you having a heart attack over code repetition. But for starters, having the whole code that describes what happens when you visit each URL <strong>in the router itself</strong> is a terrible idea. I’ll explain this refactor further ahead in the <a href="/routing-and-controllers">Routing <span class="amp">&amp;</span> controllers</a> chapter.
@@ -125,13 +191,23 @@ apiUrl = (type, args...) ->
   Integrating this with a Backbone collection is trivial (I’m using <a href="https://github.com/jfromaniello/parse-links">this</a> to parse it):
 </p>
 
-<pre><code>class PaginatedCollection extends Backbone.Collection
+<pre class="language-coffeescript"><code>class PaginatedCollection extends Backbone.Collection
   link: {}
 
   parse: (response, options) ->
     link = options.xhr.getResponseHeader 'Link'
     @link = parseLinks link
     super</code></pre>
+
+<pre class="language-javascript"><code>var PaginatedCollection = Backbone.Collection.extend({
+  link: {},
+
+  parse: function(response, options) {
+    var link = options.xhr.getResponseHeader('Link');
+    this.link = parseLinks(link);
+    return Backbone.Collection.prototype.parse.call(this, arguments);
+  }
+});</code></pre>
 
 <p>
   Obviously, collections that need pagination should inherit from <code>PaginatedCollection</code>. From hereon, you can check for <code>link.last?</code>, <code>link.next?</code> and so on in collection instances to determine whether there’s more data to be retrieved or not.
@@ -151,7 +227,7 @@ apiUrl = (type, args...) ->
   Which means you don’t necessarily want a request to return the complete book objects if they’ll be large and numerous (e.g.: containing a summary, comments, etc).
 </p>
 
-<pre><code># Partial model
+<pre class="language-coffeescript"><code># Partial model
 # =============
 #
 # An implementation for partial models. A partial model is a model
@@ -167,16 +243,47 @@ class PartialModel extends Backbone.Model
       _.map(@completeIfHas, (attr) => @attributes[attr]), _.isBlank
     )</code></pre>
 
+<pre class="language-javascript"><code>// Partial model
+// =============
+//
+// An implementation for partial models. A partial model is a model
+// that's considered incomplete until it has all of it's attributes set
+// to some value. You can alternatively specify which attributes need
+// to be set for it to be complete.
+
+var PartialModel = Backbone.Model.extend({
+  @completeIfHas: [],
+
+  isPartial: function() {
+    return !_.every(
+      _.map(
+        this.completeIfHas,
+        function(attr) { return this.attributes[attr]; }
+      ),
+      _.isBlank
+    );
+  }
+});</code></pre>
+
 <p>
   In the router, when fetching the model for rendering, you'd do:
 </p>
 
-<pre><code>showBook: (bookId) ->
-  book = App.Books.get bookid
+<pre class="language-coffeescript"><code>showBook: (bookId) ->
+  book = App.Books.get bookId
   if book? and not book.isPartial()
     # Just render the book.
   else
     # Fetch and then render it.</code></pre>
+
+<pre class="language-javascript"><code>showBook: function(bookId) {
+  var book = App.Books.get(bookId);
+  if (book && !book.isPartial()) {
+    // Just render the book.
+  } else {
+    // Fetch and then render it.
+  }
+}</code></pre>
 
 <%= partial :- %>
 

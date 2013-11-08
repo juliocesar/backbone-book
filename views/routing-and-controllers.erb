@@ -32,7 +32,7 @@
 
 <p>Assume you have the following router declared:</p>
 
-<pre><code># Application router
+<pre class="language-coffeescript"><code># Application router
 # ==================
 
 class Router extends Backbone.Router
@@ -46,6 +46,24 @@ class Router extends Backbone.Router
   bookScreen: (id) ->
     # Fetch book with `id` and render it.</code></pre>
 
+<pre class="language-javascript"><code>// Application router
+// ==================
+
+var Router = Backbone.Router.extend({
+  routes: {
+    'books':     'allBooksScreen',
+    'books/:id': 'bookScreen'
+  },
+
+  allBooksScreen: function() {
+    // Fetch all books and render a list with them.
+  },
+
+  bookScreen: function(id) {
+    // Fetch book with `id` and render it.
+  }
+});</code></pre>
+
 <p>
   As each method that handles a route gets more complex, the router will end up very complex very quickly, and it alone will be the container of way too application logic. The solution some adopt is using multiple routers, one for each topic part of the application, but while that addresses the problem of having a long router file, it fails to tackle the problem of separation of concerns: the router is doing it's job so long as it dispatches a function when a URL is visited. What that function does, however, can live outside of it.
 </p>
@@ -58,7 +76,7 @@ class Router extends Backbone.Router
   But we could and should be declaring them outside. Like so:
 </p>
 
-<pre><code># View book screen controller
+<pre class="language-coffeescript"><code># View book screen controller
 # ===========================
 #
 # Declared in a separate file, such as
@@ -70,11 +88,24 @@ viewBookController = (id) ->
 
 # Export viewBookController.</code></pre>
 
+<pre class="language-javascript"><code>// View book screen controller
+// ===========================
+//
+// Declared in a separate file, such as
+// javascripts/controllers/view-book-controller.coffee.
+
+var viewBookController = function(id) {
+  // Check a collection to see if book with id `id` exists,
+  // and if not instance a new one and fetch it.
+}
+
+// Export viewBookController.</code></pre>
+
 <p>
   And then in the router:
 </p>
 
-<pre><code># Application router
+<pre class="language-coffeescript"><code># Application router
 # ==================
 
 # Alternatively, made available in the `window` scope. With browserify,
@@ -86,6 +117,22 @@ class Router extends Backbone.Router
     'books/:id': viewBookController
 
   # ...</code></pre>
+
+<pre class="language-javascript"><code>// Application router
+// ==================
+
+// Alternatively, made available in the `window` scope. With browserify,
+// load it like so:
+var viewBookController = require('view-book-controller');
+
+var Router = Backbone.Router.extend({
+  routes: {
+    'books/:id': viewBookController
+  },
+
+  // ...
+});
+</code></pre>
 
 <p>
   This pattern has the <strong>huge</strong> benefit of making it possible to test what happens when a user goes to a certain URL <strong>completely outside</strong> of browser testing. All you need to do is load the controller module, and call it passing whatever parameters it expects (in the example above, you'd pass the <code>id</code> of a mocked instance of <code>Book</code>, for example).
@@ -101,7 +148,7 @@ class Router extends Backbone.Router
   On scaling and refactoring controllers, earlier in the <a href="/models-collections-and-data">Models, collections <span class="amp">&amp;</span> data</a> chapter I've described a repetitive data loading pattern. Mind the refactoring steps:
 </p>
 
-<pre><code># View books screen controller
+<pre class="language-coffeescript"><code># View books screen controller
 # ============================
 #
 # This uses a global `authors` collection which the controller
@@ -128,6 +175,38 @@ viewBooksController = (authorId) ->
       $container.empty().append view.render().el
       author.books.fetch()</code></pre>
 
+<pre class="language-javascript"><code>// View books screen controller
+// ============================
+//
+// This uses a global `authors` collection which the controller
+// either needs to require or is available in `window`.
+
+// Container where the view will be rendered.
+var $container = $('.some-container');
+
+var viewBooksController = function(authorId) {
+  var author = authors.get(authorId);
+  if (author) {
+    // Author exists in the collection. Keep moving.
+    var view = new BookList({collection: author.books});
+    $container.empty().append(view.render().el);
+    author.books.fetch()
+  } else {
+    // Author isn't in the collection. Fetch it
+    // before rendering a collection.
+    var author = new Author({id: authorId});
+    author.fetch({
+      success: function() {
+        // Add the author to the global collection.
+        authors.add(author);
+        var view = new BookList({collection: author.books});
+        $container.empty().append(view.render().el);
+        author.books.fetch();
+      }
+    });
+  }
+}</code></pre>
+
 <p>
   Note how we're rendering the <code>BookList</code> view before even fetching . The idea is as soon as <code>author.books.fetch()</code> is called, the collection will trigger a <code>request</code> event which the instance of <code>BookList</code> can <code>listenTo</code> and display a loading indicator. When fetch completes, it'll fire <code>sync</code>, and we can then re-render this view with actual books in it.
 </p>
@@ -136,7 +215,7 @@ viewBooksController = (authorId) ->
   But this is still awfully repetitive:
 </p>
 
-<pre><code># View books screen controller
+<pre class="language-coffeescript"><code># View books screen controller
 # ============================
 #
 # This uses a global `authors` collection which the controller
@@ -166,11 +245,47 @@ viewBooksController = (authorId) ->
       authors.add author
       renderAndFetchBooks author.books, $container</code></pre>
 
+<pre class="language-javascript"><code>// View books screen controller
+// ============================
+//
+// This uses a global `authors` collection which the controller
+// either needs to require or is available in `window`.
+
+// Container where the view will be rendered.
+var $container = $('.some-container');
+
+// Renders the appropriate view using a books collection,
+// and then calls fetch() on it.
+var renderAndFetchBooks = function(collection, $container) {
+  var view = new BookList({collection: collection});
+  $container.empty().append(view.render().el);
+  author.books.fetch();
+}
+
+# The controller itself. This is what gets exported.
+var viewBooksController = function(authorId) {
+  var author = authors.get(authorId);
+  if (author) {
+    renderAndFetchBooks(author.books, $container);
+  } else {
+    // Author isn't in the collection. Fetch it
+    // before rendering a collection.
+    author = new Author({id: authorId});
+    author.fetch({
+      success: function() {
+        // Add the author to the global collection.
+        authors.add(author);
+        renderAndFetchBooks(author.books, $container);
+      }
+    });
+  }
+}</code></pre>
+
 <p>
   The latter is <strong>much better</strong>. The controller code itself is now reduced to pretty much the high level logic. But we'll need to handle our app getting a <code>404</code> back when requesting an author. Adding this last bit should be trivial:
 </p>
 
-<pre><code># …
+<pre class="language-coffeescript"><code># …
 
 renderNotFound = (author) ->
   view = new AuthorNotFound model: author
@@ -184,6 +299,26 @@ author.fetch
   error: (model, xhr) =>
     if xhr.status is 404
       renderNotFound author</code></pre>
+
+<pre class="language-javascript"><code>// …
+
+var renderNotFound = function(author) {
+  var view = new AuthorNotFound({model: author});
+  $container.empty().append(view.render().el);
+}
+
+// And where we call author.fetch()…
+author.fetch({
+  success: function() {
+    authors.add(author);
+    renderAndFetchBooks(author.books, $container);
+  },
+  error: function(model, xhr) {
+    if (xhr.status === 404) {
+      renderNotFound(author);
+    }
+  }
+});</code></pre>
 
 <p>
   Ideally no single module of the codebase should grow too large or too complex, but the gist here is doing this stuff away from the router is a huge win. Follow this pattern and you'll no longer be looking at overly complex routers.
@@ -203,7 +338,7 @@ author.fetch
   A simple user authentication pattern works by declaring a method named <code>requireLogin</code>. We then nest in a callback argument anything that's meant to happen on a successful login:
 </p>
 
-<pre><code>class Router extends Backbone.Router
+<pre class="language-coffeescript"><code>class Router extends Backbone.Router
   routes:
     'books/:id': viewBookController
 
@@ -214,14 +349,36 @@ author.fetch
       alert "Login required! Please sign in first."
       @navigate '/login', trigger: yes</code></pre>
 
+<pre class="language-javascript"><code>var Router = Backbone.Router.extend({
+  routes: {
+    'books/:id': viewBookController
+  },
+
+  requireLogin: function(callback) {
+    if (user.isLoggedIn()) {
+      callback();
+    } else {
+      alert("Login required! Please sign in first.");
+      this.navigate('/login', { trigger: yes });
+    }
+  }
+});</code></pre>
+
 <p>
-  And from inside <code>viewBookController</code>:
+  And in <code>viewBookController</code>:
 </p>
 
-<pre><code>viewBookController = (id) ->
+<pre class="language-coffeescript"><code>viewBookController = (id) ->
   @requireLogin ->
     # Build the UI here, which will happen only
     # if `user.isLoggedIn()` is true.</code></pre>
+
+<pre class="language-javascript"><code>var viewBookController = function(id) {
+  this.requireLogin(function() {
+    // Build the UI here, which will happen only
+    // if `user.isLoggedIn()` is true.
+  });
+}</code></pre>
 
 <p>
   Because <code>viewBookController</code> is invoked from the context of the <code>Router</code> instance, any methods declared in the router will be available via the <code>@</code> (or <code>this</code>) notation.
@@ -253,7 +410,7 @@ author.fetch
   When logging in I get a list of books in my catalogue:
 </p>
 
-<pre><code># View my books controller
+<pre class="language-coffeescript"><code># View my books controller
 # ========================
 
 # Presume a user object instanced elsewhere is passed
@@ -283,6 +440,34 @@ viewMyBooksController = ->
     # is watching to tell it to just render the books.
     user.books.trigger 'reset'</code></pre>
 
+<pre class="language-javascript"><code>// View my books controller
+// ========================
+
+// Presume a user object instanced elsewhere is passed
+// to this controller.
+var user = require('current-user');
+
+var viewMyBooksController = function() {
+  var view = new ViewMyBooks({collection: user.books});
+  // Render the view. For a millisecond it won't
+  // have any books to render, which is fine.
+
+  // If there are no books my catalogue, try the
+  // server.
+  if (user.books.isEmpty()) {
+    // Calling fetch here will trigger a request event,
+    // which ViewMyBooks should watch for and display
+    // feedback along the lines of saying
+    // “Loading your books…”.
+    user.books.fetch()
+  } else {
+    // Probably visited this screen before and books
+    // were loaded, so trigger an event which the view
+    // is watching to tell it to just render the books.
+    user.books.trigger 'reset'
+  }
+}</code></pre>
+
 <p>
   With that, when navigating away from this screen and back to it, it'll seem as if my catalogue of books just rendered instantly. But for instance, if this screen loads only the 20 newest books introduced to my catalogue, and elsewhere in the screen the app displays a link to an older book of mine because someone left a comment in it.
 </p>
@@ -291,7 +476,7 @@ viewMyBooksController = ->
   Here's the overly commented out flow:
 </p>
 
-<pre><code># View single book controller
+<pre class="language-coffeescript"><code># View single book controller
 # ===========================
 
 user = require 'current-user'
@@ -328,6 +513,44 @@ viewSingleBookController = (bookId) ->
       # the view to re-render, thus displaying the model
       # with all it's attributes.</code></pre>
 
+<pre class="language-javascript"><code>// View single book controller
+// ===========================
+
+var user = require('current-user');
+
+var viewSingleBookController = function(bookId) {
+  var model = user.books.get(bookId);
+  if (model) {
+    // We fetched this model before, so give it to the
+    // view and display it.
+    var view = new ViewSingleBook model: model
+    // Render the view…
+  } else {
+    // The model doesn't exist in the collection. Instance
+    // a new object to receive it when we fetch it, and hand
+    // it “hollow” to the view, which will know what to display
+    // when a model has no attributes yet.
+    var model = new Book({id: bookId});
+    var view = new ViewSingleBook({model: model});
+    // Render the view…
+
+    // Now fetch the book. This will trigger a “request”
+    // event, which we can use to give the user feedback on
+    // the fact it's being fetched.
+    model.fetch({
+      success: function() {
+        // Fetched successfully, add to the collection.
+        user.books.add(model);
+
+        // No further action required here as when the model
+        // was fetched, it fired a “sync” event, which forced
+        // the view to re-render, thus displaying the model
+        // with all it's attributes.
+      }
+    });
+  }
+}</code></pre>
+
 <p>
   In a gist, what this controller does is if it finds that a book is already in the user's catalogue collection, it hands it to the appropriate view and gets it to render it, otherwise it fetches it first, adds to the catalogue, and then renders it. So now if I navigate away from this book's page and back to it, it'll also render it instantly.
 </p>
@@ -340,7 +563,7 @@ viewSingleBookController = (bookId) ->
   Last, keeping things in memory is a form of caching. You may be displaying stale data for a book, so the process will have to be smarter than merely checking whether a book exists in memory. One <strong>very</strong> simple yet effective approach is to do the following:
 </p>
 
-<pre><code># Skipping to the part where we grab the book …
+<pre class="language-coffeescript"><code># Skipping to the part where we grab the book …
 if model = user.books.get bookId
 
   # We fetched this model before, so give it to the
@@ -352,6 +575,20 @@ if model = user.books.get bookId
   # fetch completes, the UI will be re-rendered since
   # we're watching for “sync” events in it.
   model.fetch()</code></pre>
+
+<pre class="language-javascript"><code>// Skipping to the part where we grab the book …
+var model = user.books.get(bookId);
+if (model) {
+  // We fetched this model before, so give it to the
+  // view and display it.
+  var view = new ViewSingleBook model: model
+  // Render the view…
+
+  // Call fetch to ensure we have the latest data. When
+  // fetch completes, the UI will be re-rendered since
+  // we're watching for “sync” events in it.
+  model.fetch();
+}</code></pre>
 
 <p>
   This re-rendering of the view should then display the updated data, and of course, for good UX sake a near-instant update is better than a slow one, but you can mitigate that by displaying a progress indicator somewhere so the user knows it's looking for data in the server. In the meantime, the user is given something to work with, which in the likelihood of it not being stale data, it'll be all that they need.
