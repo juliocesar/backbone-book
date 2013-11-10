@@ -5,15 +5,11 @@
 </h1>
 
 <p>
-  Events connect one component to another. You've been using DOM interaction events since you wrote your first view and declared an <code>events</code> attribute to get user interactions with the DOM to trigger functions in your views. And due to how event delegation works, should an element you refer to not exist, the app will not error out, and that's a good thing: you can think of this relationship as a form of loose coupling.
+  You've been using events since you wrote your first view and got it to listen to a model's <code>change</code> event. But this chapter is about using it to create a message bus for inter-component communication that will allow each piece (or module) or your app to work standalone.
 </p>
 
 <p>
-  This chapter is about <a href="http://backbonejs.org/#Events">Backbone.Events</a>, and how you can use it to create a cohese protocol for inter-component communication that will allow each piece (or module) or your app to work standalone.
-</p>
-
-<p>
-  Remember the <a href="/views">Views</a> chapter, “they should still work, as in not throw errors, when rendered on their own”. This chapter is about making a component in the UI <strong>interactible</strong> even when sitting alone in the screen with no other components rendered around it, and it <strong>still</strong> should not produce any errors.
+  Remember the <a href="/views">Views</a> chapter, “…they should still work, as in not throw errors, when rendered on their own”. This chapter is about making the UI components <strong>interactible even</strong>, and in so far as they relate to other components, the interaction should produce no errors.
 </p>
 
 <%= partial :- %>
