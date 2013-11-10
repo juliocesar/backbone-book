@@ -1,0 +1,55 @@
+<% @title = 'Using events like a boss' %>
+
+<h1>
+  Using events like a boss
+</h1>
+
+<p>
+  Events connect one component to another. You've been using DOM interaction events since you wrote your first view and declared an <code>events</code> attribute to get user interactions with the DOM to trigger functions in your views. And due to how event delegation works, should an element you refer to not exist, the app will not error out, and that's a good thing: you can think of this relationship as a form of loose coupling.
+</p>
+
+<p>
+  This chapter is about <a href="http://backbonejs.org/#Events">Backbone.Events</a>, and how you can use it to create a cohese protocol for inter-component communication that will allow each piece (or module) or your app to work standalone.
+</p>
+
+<p>
+  Remember the <a href="/views">Views</a> chapter, “they should still work, as in not throw errors, when rendered on their own”. This chapter is about making a component in the UI <strong>interactible</strong> even when sitting alone in the screen with no other components rendered around it, and it <strong>still</strong> should not produce any errors.
+</p>
+
+<%= partial :- %>
+
+<p>
+  There's a number of pubsub libraries for JavaScript out there. If you're using Backbone, they're all a waste of time. The <code>Backbone</code> object itself works as an event hub that your components (views, models, collections, etc) can listen on, and since that object will always be visible to pretty much every component you write, there's no reason why you'd step out of it.
+</p>
+
+<p>
+  You can think of it as a global message exchange. You'll dump on it anything that's not an immediate relationship. An immediate relationship is, for example, a view and it's model. Now if for example your app flashes a message that stays visible for a few seconds every time a <code>Book</code> is created, then this flash component works a lot like an addon which isn't tied to view that does the model creation.
+</p>
+
+<p>
+  You want to be able to create books without getting an error complaining the messaging component doesn't exist. So we should set up our <code>Book</code> model to broadcast a message when a new one is created:
+</p>
+
+<pre class="language-coffeescript">class Book extends Backbone.Model<code>
+  initialize: ->
+    @on 'change:id', ->
+      Backbone.trigger 'books:created'</code></pre>
+
+<p>
+  The component can then go:
+</p>
+
+<pre class="language-coffeescript"><code>class Flash extends Backbone.View
+  initialize: ->
+    @listenTo Backbone, 'books:created', @show
+
+</code></pre>
+
+<%= partial :- %>
+
+Menu and pane example.
+
+<%= partial :- %>
+
+Creating a relationship between `window` and a component through a module introduced on boot time that watches it.
+
