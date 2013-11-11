@@ -156,7 +156,7 @@
 </p>
 
 <p>
-  As an added bonus, we can also “write” to this module by getting it to it watch the <code>Backbone</code> object for an event which can be triggered when you want to scroll the page to a specific entry, or to the top maybe.
+  As a bonus, we can also “write” to this by getting it to it watch the <code>Backbone</code> object for an event which can be triggered when you want to scroll the page to a specific entry, or to the top maybe.
 </p>
 
 <pre class="language-coffeescript"><code># Scrolling module
@@ -217,7 +217,8 @@ Scrolling.trackScrolling = function() {
       if (body.scrollTop > threshold) {
         Backbone.trigger('page:scrollbottom');
       }
-    , 1000}
+    },
+    1000
     );
   );
 }
