@@ -1,0 +1,19 @@
+<% @title = 'Organising your app' %>
+
+<h1>
+  Organising your app
+</h1>
+
+<p>
+  Code organisation makes or breaks an app. And doing it right isn't just knowing how to separate models, collections, and views. That's all fairly obvious. The part where most fail is knowing how to load things properly, and knowing what should be separated from instancing time and runtime.
+</p>
+
+<p>
+  The formula we'll use here is simple: we'll write a manifest file and a boot script.
+</p>
+
+<%= partial :- %>
+
+<p>
+  The manifest file is a list of all scripts that are needed for your app to work. Things will really diverge here depending on what back-end or build system you are using: Rails uses <a href="https://github.com/sstephenson/sprockets">Sprockets</a>, and Sprockets is also available on Sinatra through the <a href="https://github.com/kalasjocke/sinatra-asset-pipeline">sinatra-asset-pipeline</a> project, and it's usable as
+</p>
