@@ -469,11 +469,11 @@ var viewMyBooksController = function() {
 }</code></pre>
 
 <p>
-  With that, when navigating away from this screen and back to it, it'll seem as if my catalogue of books just rendered instantly. But for instance, if this screen loads only the 20 newest books introduced to my catalogue, and elsewhere in the screen the app displays a link to an older book of mine because someone left a comment in it.
+  With that, when navigating away from this screen and back to it, it'll seem as if my catalogue of books just rendered instantly.
 </p>
 
 <p>
-  Here's the overly commented out flow:
+  But for instance, if this screen loads only the 20 newest books introduced to my catalogue, and we arrive to a book not among these 20 by virtue of a link elsewhere in the screen. Here's the overly commented out flow:
 </p>
 
 <pre class="language-coffeescript"><code># View single book controller
