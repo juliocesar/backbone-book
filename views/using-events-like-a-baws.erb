@@ -26,10 +26,18 @@
   You want to be able to create books without getting an error complaining this “flash component” doesn't exist. So we should set up our <code>Book</code> model to broadcast a message when a new one is created:
 </p>
 
-<pre class="language-coffeescript">class Book extends Backbone.Model<code>
+<pre class="language-coffeescript"><code>class Book extends Backbone.Model
   initialize: ->
     @on 'change:id', ->
-      Backbone.trigger 'books:created'</code></pre>
+      Backbone.trigger 'books:created', @</code></pre>
+
+<pre class="language-javascript"><code>var Book = Backbone.Model.extend({
+  initialize: function() {
+    this.on('change:id', function() {
+      Backbone.trigger('books:created', this);
+    }
+  }
+});</code></pre>
 
 <p>
   The component can then go:
@@ -43,6 +51,18 @@
     @model = model
     @render()
     # Display the message...</code></pre>
+
+<pre class="language-javascript"><code>var Flash = Backbone.View.extend({
+  initialize: function() {
+    this.listenTo(Backbone, 'books:created', this.show);
+  },
+
+  show: function(model) {
+    this.model = model;
+    this.render();
+    // Display the message...
+  }
+});</code></pre>
 
 <p>
   Now think for a second about what we accomplished: we know that what <code>Flash</code> needs in order to work is for an event to be triggered on <code>Backbone</code> named <code>books:created</code>. That's it. Now in the course of testing this component, so long as we do that and pass an instance of <code>Book</code> to it, or just an object with an <code>attributes</code> property set, the whole of it's functionality can be specced independently of any other piece of UI.
@@ -76,6 +96,17 @@
   clickToggleFeeds: ->
     Backbone.trigger 'feeds:toggle'</code></pre>
 
+<pre class="language-javascript"><code>var MainMenu = Backbone.View.extend({
+  template: JST['main_menu'],
+  events: {
+    'click .toggle-feeds-button': 'clickToggleFeeds'
+  },
+
+  clickToggleFeeds: function() {
+    Backbone.trigger('feeds:toggle');
+  }
+});</code></pre>
+
 <p>
   While the feeds component goes:
 </p>
@@ -88,6 +119,19 @@
 
   toggle: ->
     @$el.toggleClass 'visible'</code></pre>
+
+<pre class="language-javascript"><code>var FeedsPane = Backbone.View.extend({
+  template: JST['feeds_pane'],
+
+  initialize: function() {
+    this.listenTo(Backbone, 'feeds:toggle', this.toggle);
+  },
+
+  toggle: function() {
+    this.$el.toggleClass('visible');
+  }
+});
+</code></pre>
 
 <p>
   Referring to an instance of <code>FeedsPane</code> directly from within <code>MainMenu</code> would mean creating a hard reference to it, and that's not good architecture, as we'd now need them to be instanced in a specific order, as well as having their core functionality tied to each other. It'll be harder to test, and harder to refactor the more we add these hard references.
@@ -149,6 +193,48 @@ Scrolling.initialize = ->
   @trackScrolling()
   @trackScrollTo()</code></pre>
 
+<pre class="language-javascript"><code>// Scrolling module
+// ================
+
+// Object this module exports.
+var Scrolling = {};
+
+// Element that we're tracking scrolling.
+var $el = $ window;
+
+// Trigger when this many pixels far from the bottom.
+var tolerance = 40
+
+// Let this module listen to events.
+_.extend(Scrolling, Backbone.Events);
+
+// Tracks page scrolling and fires an event when it gets near the bottom.
+Scrolling.trackScrolling = function() {
+  $el.on('scroll', _.throttle(
+    function(event) {
+      var body = document.body;
+      var threshold = body.scrollHeight - window.innerHeight - tolerance;
+      if (body.scrollTop > threshold) {
+        Backbone.trigger('page:scrollbottom');
+      }
+    , 1000}
+    );
+  );
+}
+
+// Listens to an event which scrolls the page to an offset when triggered.
+Scrolling.trackScrollTo = function() {
+  this.listenTo(Backbone, 'page:scrollto', function(offset) {
+    document.body.scrollTop = offset;
+  });
+}
+
+// Run this module by calling initialize().
+Scrolling.initialize = function() {
+  this.trackScrolling();
+  this.trackScrollTo();
+}</code></pre>
+
 <p>
   This recipe goes along perfectly with the link headers pagination recipe from the <a href="/models-collections-and-data">Models, collections &amp; data</a> chapter. Say we have a list of books which we want to add infinite scrolling to. The view can then listen to the event like so:
 </p>
@@ -165,6 +251,22 @@ Scrolling.initialize = ->
     else
       # No further books to fetch, display some feedback.</code></pre>
 
+<pre class="language-javascript"><code>var BooksList = Backbone.View.extend({
+  // ...
+
+  initialize: function() {
+    this.listenTo(Backbone, 'page:scrollbottom', this.scrolledBottom);
+  },
+
+  scrolledbottom: function() {
+    if (this.collection.link && this.collection.link.next) {
+      this.collection.fetch({remove: false, url: this.collection.link.next});
+    } else {
+      // No further books to fetch, display some feedback.
+    }
+  }
+});</code></pre>
+
 <p>
   And this is terrible UX, but so the point can be demonstrated, let's say when another user leaves a comment on a book, we want to scroll the page to it, and that the method <code>getOffsetForModel</code> magically returns the Y axis offset for a book:
 </p>
@@ -179,6 +281,18 @@ Scrolling.initialize = ->
     offset = @getOffsetForModel model
     Backbone.trigger 'page:scrollto', offset</code></pre>
 
+<pre class="language-javascript"><code>// ...
+
+  initialize: function() {
+    this.listenTo(Backbone, 'page:scrollbottom', this.scrolledBottom);
+    this.listenTo(this.collection, 'comment', this.commentCreated);
+  },
+
+  commentCreated: function(model) {
+    offset = @getOffsetForModel(model);
+    Backbone.trigger('page:scrollto', offset);
+  }</code></pre>
+
 <p>
   We now have an event which works like a command: when invoked, pass an offset to it and the page will scroll to a given offset.
 </p>
@@ -189,8 +303,68 @@ Scrolling.initialize = ->
 
 <%= partial :- %>
 
-Component and router relationship.
+<p>
+  In the spirit of henceforth adding components as features in our app, which will only add what it can do rather than become a hard dependency, another such relationship can be created between anything that sends the browser to a different URL and the router.
+</p>
+
+<p>
+  This pattern works if your app has only one router, as should be the case if you followed the advice given on the previous chapter.
+</p>
+
+<pre class="language-coffeescript"><code>class Router extends Backbone.Router
+  # ...
+
+  initialize: ->
+    @listenTo Backbone, 'router:go', @go
+
+  # This is just a shortcut to navigate(), and it always triggers
+  # the controller, which is what you'll want most of the time.
+  go: (route) ->
+    @navigate route, trigger: yes</code></pre>
+
+<pre class="language-javascript"><code>var Router = Backbone.Router.extend({
+  // ...
+
+  initialize: function() {
+    this.listenTo(Backbone, 'router:go', this.go);
+  },
+
+  // This is just a shortcut to navigate(), and it always triggers
+  // the controller, which is what you'll want most of the time.
+  go: function(route) {
+    this.navigate(route, { trigger: yes });
+  }
+});</code></pre>
+
+<p>
+  For example, views that send the user to a different page altogether can then use this event to do so. If a router doesn't exist because none was ever initialised by the app, nothing will happen.
+</p>
+
+<pre class="language-coffeescript"><code>class BookListEntry extends Backbone.View
+  template: JST['books/list_entry']
+  events:
+    'click .title': 'clickTitle'
+
+  clickTitle: ->
+    Backbone.trigger 'route:go', "/books/#{@model.id}"</code></pre>
+
+<pre class="language-javascript"><code>var BookListEntry = Backbone.View.extend({
+  template: JST['books/list_entry'],
+  events: {
+    'click .title': 'clickTitle'
+  },
+
+  clickTitle: function() {
+    Backbone.trigger('route:go', "/books/" + this.model.id);
+  }
+});</code></pre>
 
 <%= partial :- %>
 
-On adding capabilities to an application and tying them with events.
+<p>
+  By now you got the gist: events allow you to avoid having to refer to a class/module from within another class/module directly (by name). This eliminates scenarios such as modules needing to be executed in order. And as a consequence, it lets you literally assemble the UI from pieces.
+</p>
+
+<p>
+  There's a lot more you can do with this, though. Another idea: if you're using jQuery, globally trapping status codes such as <code>500</code> and displaying an appropriate message, or even detecting offline/online status to provide the user with feedback.
+</p>
