@@ -5,11 +5,11 @@
 </h1>
 
 <p>
-  You've been using events since you wrote your first view and got it to listen to a model's <code>change</code> event. But this chapter is about using it to create a message bus for inter-component communication that will allow each piece (or module) or your app to work standalone.
+  You've been using events since you wrote your first view and got it to listen to a model's <code>change</code> event. But this chapter is about using events for creating a message bus for inter-component communication that will allow each piece (or module) or your app to work standalone.
 </p>
 
 <p>
-  Remember the <a href="/views">Views</a> chapter, “…they should still work, as in not throw errors, when rendered on their own”. This chapter is about making the UI components <strong>interactible even</strong>, and in so far as they relate to other components, the interaction should produce no errors.
+  Remember the <a href="/views">Views</a> chapter, “…they should still work, as in not throw errors, when rendered on their own”. In this chapter, we'll make the UI components <strong>interactable</strong> even, and insofar as they relate to other components, the interaction should produce no errors.
 </p>
 
 <%= partial :- %>
@@ -19,7 +19,7 @@
 </p>
 
 <p>
-  You can think of it as a global message exchange. You'll dump on it anything that's not of interest to an immediate module relationship. An immediate relationship is, for example, a view and it's model. Now if for example your app flashes a message that stays visible for a few seconds every time a <code>Book</code> is created, then this flash component works a lot like an addon which isn't tied to view that does the model creation, and nor the model itself.
+  You can think of it as a global message exchange. You'll dump on it anything that's not of interest to an immediate module relationship. An immediate relationship is, for example, a view and it's model. Now if for example your app flashes a message that stays visible for a few seconds every time a <code>Book</code> is created, then this flash component works a lot like an addon which isn't tied to the view that does the model creation, nor the model itself.
 </p>
 
 <p>
@@ -65,13 +65,13 @@
 });</code></pre>
 
 <p>
-  Now think for a second about what we accomplished: we know that what <code>Flash</code> needs in order to work is for an event to be triggered on <code>Backbone</code> named <code>books:created</code>. That's it. Now in the course of testing this component, so long as we do that and pass an instance of <code>Book</code> to it, or just an object with an <code>attributes</code> property set, the whole of it's functionality can be specced independently of any other piece of UI.
+  Now think for a second about what we accomplished: we know that what <code>Flash</code> needs in order to work is for an event to be triggered on <code>Backbone</code> named <code>books:created</code>. That's it. Now in the course of testing this component, so long as we do that and pass an instance of <code>Book</code> to it (or a mock), the whole of it's functionality can be specced independently of any other piece of UI.
 </p>
 
 <%= partial :- %>
 
 <p>
-  There are no hard rules on this, but once you start using global events a lot, it's easier to track them if you name them properly.
+  There are no hard rules on this, but once you start using global events a lot, it'll be a lot easier to track them if you name them properly.
 </p>
 
 <p>
@@ -138,7 +138,7 @@
 </p>
 
 <p>
-  Granted, you'll have a hard time separating <strong>everything from everything</strong>, and it's not worth it. For instance, a list element view class is used by a UI component to render a collection. It's fine for the UI component to refer to these classes directly when creating instances to render each entry. In general (not always), so long as you apply this to interactions between distinct parts of the UI, you're doing it right.
+  Granted, you'll have a hard time separating <strong>everything from everything</strong>, and it's not worth it. For instance, a list element view class is used by a UI component to render a collection. It's fine for the UI component to refer to these classes directly when creating instances to render each entry. In general (not always), so long as you apply this to interactions between distinct regions of the UI, you're doing it right.
 </p>
 
 <%= partial :- %>
@@ -156,7 +156,7 @@
 </p>
 
 <p>
-  As an added bonus, we can also “write” to this module by making it watch the <code>Backbone</code> object for an event which can be triggered when you want to scroll the page to a specific entry, or to the top maybe.
+  As an added bonus, we can also “write” to this module by getting it to it watch the <code>Backbone</code> object for an event which can be triggered when you want to scroll the page to a specific entry, or to the top maybe.
 </p>
 
 <pre class="language-coffeescript"><code># Scrolling module
