@@ -19,11 +19,11 @@
 </p>
 
 <p>
-  You can think of it as a global message exchange. You'll dump on it anything that's not an immediate relationship. An immediate relationship is, for example, a view and it's model. Now if for example your app flashes a message that stays visible for a few seconds every time a <code>Book</code> is created, then this flash component works a lot like an addon which isn't tied to view that does the model creation.
+  You can think of it as a global message exchange. You'll dump on it anything that's not of interest to an immediate module relationship. An immediate relationship is, for example, a view and it's model. Now if for example your app flashes a message that stays visible for a few seconds every time a <code>Book</code> is created, then this flash component works a lot like an addon which isn't tied to view that does the model creation, and nor the model itself.
 </p>
 
 <p>
-  You want to be able to create books without getting an error complaining the messaging component doesn't exist. So we should set up our <code>Book</code> model to broadcast a message when a new one is created:
+  You want to be able to create books without getting an error complaining this “flash component” doesn't exist. So we should set up our <code>Book</code> model to broadcast a message when a new one is created:
 </p>
 
 <pre class="language-coffeescript">class Book extends Backbone.Model<code>
@@ -39,13 +39,158 @@
   initialize: ->
     @listenTo Backbone, 'books:created', @show
 
-</code></pre>
+  show: (model) ->
+    @model = model
+    @render()
+    # Display the message...</code></pre>
+
+<p>
+  Now think for a second about what we accomplished: we know that what <code>Flash</code> needs in order to work is for an event to be triggered on <code>Backbone</code> named <code>books:created</code>. That's it. Now in the course of testing this component, so long as we do that and pass an instance of <code>Book</code> to it, or just an object with an <code>attributes</code> property set, the whole of it's functionality can be specced independently of any other piece of UI.
+</p>
 
 <%= partial :- %>
 
-Menu and pane example.
+<p>
+  There are no hard rules on this, but once you start using global events a lot, it's easier to track them if you name them properly.
+</p>
+
+<p>
+  As recommended in the <a href="http://backbonejs.org/#Events">Events docs</a>, you can use colons to namespace them. It's a good strategy to namespace them in a format like <code>subject-as-plural:action</code>, and you can forego the pluralisation if there'll never be more than one instance of the subject as far as the client-side codebase goes. So <code>books:created</code>, <code>user:sign-in</code>, and so on.
+</p>
 
 <%= partial :- %>
 
-Creating a relationship between `window` and a component through a module introduced on boot time that watches it.
+<p>
+  In the previous example we used, we connected a second view-like component (<code>Flash</code>) to a model, but this can be used to get two views to talk to each other too.
+</p>
 
+<p>
+  In <a href="https://lisant.io">Lisant</a>, the main menu on the left hand side is a separate component to the panes it expands when the corresponding button is clicked. A cut down example of how it does it looks like this:
+</p>
+
+<pre class="language-coffeescript"><code>class MainMenu extends Backbone.View
+  template: JST['main_menu']
+  events:
+    'click .toggle-feeds-button': 'clickToggleFeeds'
+
+  clickToggleFeeds: ->
+    Backbone.trigger 'feeds:toggle'</code></pre>
+
+<p>
+  While the feeds component goes:
+</p>
+
+<pre class="language-coffeescript"><code>class FeedsPane extends Backbone.View
+  template: JST['feeds_pane']
+
+  initialize: ->
+    @listenTo Backbone, 'feeds:toggle', @toggle
+
+  toggle: ->
+    @$el.toggleClass 'visible'</code></pre>
+
+<p>
+  Referring to an instance of <code>FeedsPane</code> directly from within <code>MainMenu</code> would mean creating a hard reference to it, and that's not good architecture, as we'd now need them to be instanced in a specific order, as well as having their core functionality tied to each other. It'll be harder to test, and harder to refactor the more we add these hard references.
+</p>
+
+<p>
+  Granted, you'll have a hard time separating <strong>everything from everything</strong>, and it's not worth it. For instance, a list element view class is used by a UI component to render a collection. It's fine for the UI component to refer to these classes directly when creating instances to render each entry. In general (not always), so long as you apply this to interactions between distinct parts of the UI, you're doing it right.
+</p>
+
+<%= partial :- %>
+
+<p>
+  You can use events to create a relationship between browser features and your app. That's in fact the right way to do it, as you want to keep your app as independent from it as possible.
+</p>
+
+<p>
+  One good example is infinite scrolling. Unlike tracking a click on an element in a view's template (for which you'd use the <code>events</code> object), if you're scrolling the page itself as opposed to scrolling an element, the event source will be the <code>window</code> object, and you need it to be visible to your app.
+</p>
+
+<p>
+  The best way to do it is by introducing a small module whose role is watching for the event and broadcasting it via the <code>Backbone</code> object. That way you can avoid tying all other views that may be interested in the event to the DOM.
+</p>
+
+<p>
+  As an added bonus, we can also “write” to this module by making it watch the <code>Backbone</code> object for an event which can be triggered when you want to scroll the page to a specific entry, or to the top maybe.
+</p>
+
+<pre class="language-coffeescript"><code># Scrolling module
+# ================
+
+# Object this module exports.
+Scrolling = {}
+
+# Element that we're tracking scrolling.
+$el = $ window
+
+# Trigger when this many pixels far from the bottom.
+tolerance = 40
+
+# Let this module listen to events.
+_.extend Scrolling, Backbone.Events
+
+# Tracks page scrolling and fires an event when it gets near the bottom.
+Scrolling.trackScrolling = ->
+  $el.on 'scroll', _.throttle (event) =>
+    body = document.body
+    threshold = body.scrollHeight - window.innerHeight - tolerance
+    if body.scrollTop > threshold
+      Backbone.trigger 'page:scrollbottom'
+  , 1000
+
+# Listens to an event which scrolls the page to an offset when triggered.
+Scrolling.trackScrollTo = ->
+  @listenTo Backbone, 'page:scrollto', (offset) ->
+    document.body.scrollTop = offset
+
+# Run this module by calling initialize().
+Scrolling.initialize = ->
+  @trackScrolling()
+  @trackScrollTo()</code></pre>
+
+<p>
+  This recipe goes along perfectly with the link headers pagination recipe from the <a href="/models-collections-and-data">Models, collections &amp; data</a> chapter. Say we have a list of books which we want to add infinite scrolling to. The view can then listen to the event like so:
+</p>
+
+<pre class="language-coffeescript"><code>class BooksList extends Backbone.View
+  # ...
+
+  initialize: ->
+    @listenTo Backbone, 'page:scrollbottom', @scrolledBottom
+
+  scrolledbottom: ->
+    if @collection.link?.next?
+      @collection.fetch remove: no, url: @collection.link.next
+    else
+      # No further books to fetch, display some feedback.</code></pre>
+
+<p>
+  And this is terrible UX, but so the point can be demonstrated, let's say when another user leaves a comment on a book, we want to scroll the page to it, and that the method <code>getOffsetForModel</code> magically returns the Y axis offset for a book:
+</p>
+
+<pre class="language-coffeescript"><code># ...
+
+  initialize: ->
+    @listenTo Backbone, 'page:scrollbottom', @scrolledBottom
+    @listenTo @collection, 'comment', @commentCreated
+
+  commentCreated: (model) ->
+    offset = @getOffsetForModel model
+    Backbone.trigger 'page:scrollto', offset</code></pre>
+
+<p>
+  We now have an event which works like a command: when invoked, pass an offset to it and the page will scroll to a given offset.
+</p>
+
+<p>
+  Last, should we remove the <code>Scrolling</code> module above from the app, the functionality will be removed, but the app won't break per se.
+</p>
+
+<%= partial :- %>
+
+Component and router relationship.
+
+<%= partial :- %>
+
+On adding capabilities to an application and tying them with events.
