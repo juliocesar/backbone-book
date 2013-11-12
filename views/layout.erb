@@ -13,26 +13,34 @@
   </head>
   <body class="<%= @class ? @class : "chapter" %>">
     <%= yield %>
+    <%= javascript_tag 'prism' %>
+    <script>
+      (function(d) {
+        var languages = ['coffeescript', 'javascript]'];
+        var selected = localStorage['language'];
+        if (!selected) selected = 'coffeescript'
+        d.body.classList.add('language-' + selected);
+        d.addEventListener("keypress", function(event) {
+          if (!event.keyCode === 115) return;
+          if (d.body.classList.contains('language-coffeescript')) {
+            d.body.classList.remove('language-coffeescript');
+            d.body.classList.add('language-javascript');
+            localStorage['language'] = 'javascript';
+          } else {
+            d.body.classList.remove('language-javascript');
+            d.body.classList.add('language-coffeescript');
+            localStorage['language'] = 'coffeescript';
+          }
+        }, false);
+      })(document);
+    </script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-45688007-1', 'pragmatic-backbone.com');
+      ga('send', 'pageview');
+    </script>
   </body>
-  <%= javascript_tag 'prism' %>
-  <script>
-    (function(d) {
-      var languages = ['coffeescript', 'javascript]'];
-      var selected = localStorage['language'];
-      if (!selected) selected = 'coffeescript'
-      d.body.classList.add('language-' + selected);
-      d.addEventListener("keypress", function(event) {
-        if (!event.keyCode === 115) return;
-        if (d.body.classList.contains('language-coffeescript')) {
-          d.body.classList.remove('language-coffeescript');
-          d.body.classList.add('language-javascript');
-          localStorage['language'] = 'javascript';
-        } else {
-          d.body.classList.remove('language-javascript');
-          d.body.classList.add('language-coffeescript');
-          localStorage['language'] = 'coffeescript';
-        }
-      }, false);
-    })(document);
-  </script>
 </html>
