@@ -143,14 +143,14 @@ GlobalErrors.initialize()
 # A module for tracking and broadcasting page scrolling events.
 Scrolling.initialize()
 
-# The router. We don't usually need to keep a reference to it.
+# The router. We usually don't need to keep a reference to it.
 new Router
 
 # Kick off the router code.
 Backbone.history.start pushState: yes</code></pre>
 
 <p>
-  Some will argue views should always be built within the router (through a controller as we explained in the respective chapter). It depends on how you structure the application. The assumption here is those two views will always appear regardless of the URL you arrive in the app from. So it makes sense. And that's just it: it has to make sense.
+  Some will argue views should always be built within the router (through a controller as we explained in the respective chapter). It depends on how you structure the application. The assumption here is those two views will always appear regardless of the URL you arrive in the app from, so it makes sense. And that's the only rule: it has to make sense and work well without ruining modularity and/or separation of concerns.
 </p>
 
 <%= partial :- %>
