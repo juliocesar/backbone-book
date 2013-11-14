@@ -5,15 +5,116 @@
 </h1>
 
 <p>
-  Code organisation makes or breaks an app. And doing it right isn't just knowing how to separate models, collections, and views. That's the easy part. The part where most fail is knowing how to load things properly, and knowing what should be separated from loading, initialisation, and runtime.
+  Code organisation makes or breaks an app, and doing it right isn't just knowing how to separate models, collections, and views. That's the easy part. The part where most fail is knowing what should be separated from loading and runtime.
 </p>
 
 <p>
-  The formula we'll use here is simple: we'll write a manifest file and a boot script.
+  The formula we'll use here is simple and yet very effective: we'll write a manifest file and a boot script. The manifest will pull all your scripts in (loading), and the boot script is where the base app classes/modules will be instanced (runtime).
+</p>
+
+<p>
+  The boot script is especially important for keeping control over what gets used and when, so when writing a test case for a view, you'll want to load it, setup mocks for any models/collections it uses, instance it passing the mocks to it, and then test it's features, in this order. If loading a module means running it, it's <strong>a lot</strong> harder to do that.
 </p>
 
 <%= partial :- %>
 
 <p>
-  The manifest file is a list of all scripts that are needed for your app to work. Things will really diverge here depending on what back-end or build system you are using: Rails uses <a href="https://github.com/sstephenson/sprockets">Sprockets</a>, and Sprockets is also available on Sinatra through the <a href="https://github.com/kalasjocke/sinatra-asset-pipeline">sinatra-asset-pipeline</a> project, and it's usable as
+  The manifest file is a list of scripts needed for your app to work. Things will really diverge here depending on what back-end or build system you are using.
+</p>
+
+<p>
+  Rails uses <a href="https://github.com/sstephenson/sprockets">Sprockets</a>, which is also available on Sinatra through the <a href="https://github.com/kalasjocke/sinatra-asset-pipeline">sinatra-asset-pipeline</a> project, as well as being usable <a href="https://github.com/juliocesar/hopla.io/blob/master/Rakefile#L66">on it's own</a>. For JavaScript/node.js there's <a href="http://gruntjs.com/">Grunt</a>. Most Grunt workflows consist of writing a task declaring an array of files which will get concatenated into a single file.
+</p>
+
+<p>
+  Regardless of the tooling you choose, both will achieve the same: take a bunch of files and turn them into one, the file you'll serve. With adequate caching set for both HTML and this script, and appending a digest to the script file name, your setup is pretty damn good.
+</p>
+
+<p>
+  There's also an entirely different approach to this problem which is dynamically loading scripts as you need them, and the most popular tool for it is <a href="http://requirejs.org/">require.js</a>. By all means, check it out. It won't be covered here though.
+</p>
+
+<%= partial :- %>
+
+<p>
+  With Sprockets, an expanded manifest file looks like this. This is actually an excellent way to explain how it conceptually works, even if you're planning on using Grunt.
+</p>
+
+<pre class="language-coffeescript"><code># App scripts manifest
+# ====================
+
+# Dependencies.
+#= require vendor/jquery
+#= require vendor/underscore
+#= require vendor/backbone
+
+# Data layer.
+#= require models/user
+#= require models/book
+#= require models/cart
+#= require models/comment
+#= require collections/books
+#= require collections/comments
+
+# Views.
+#= require views/books/list
+#= require views/books/show
+#= require views/user/show
+# …
+
+# The router.
+#= require router
+
+# App boot script.
+#= require boot</code></pre>
+
+<p>
+  Which should be refactored to this:
+</p>
+
+<pre class="language-coffeescript"><code># App scripts manifest
+# ====================
+
+# Dependencies.
+#= require_tree ./vendor
+
+# Data layer.
+#= require_tree ./models
+#= require_tree ./collections
+
+# Views.
+#= require_tree views
+
+# The router.
+#= require router
+
+# App boot script.
+#= require boot</code></pre>
+
+<p>
+  When Sprockets compiles this script, it'll inline all the files <code>require</code>d by it (and as you probably guessed, <code>require_tree</code> inlines a whole directory and subdirectories of scripts).
+</p>
+
+<%= partial :- %>
+
+<p>
+  There's an “export hack” you should write in every script. It goes like this:
+</p>
+
+<pre class="language-coffeescript"><code># Book list view
+# ==============
+
+class BookList extends Backbone.View
+  # …
+  # …
+  # …
+
+(module?.exports = BookList) or @BookList = BookList</code></pre>
+
+<p>
+  That last line will check for the existence of the <code>module</code> keyword, and if it exists, it'll assign the <code>BookList</code> object to it. Or if <code>module</code> does not exist, assign <code>BookList</code> to the global scope. This ensures regardless of whether you're using a module system or just loading the script as is, the end result is the product is always where you expect it to be.
+</p>
+
+<p>
+  And always do that separately from the class/module declaration itself.
 </p>
