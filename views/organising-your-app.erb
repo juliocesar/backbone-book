@@ -95,6 +95,64 @@
   When Sprockets compiles this script, it'll inline all the files <code>require</code>d by it (and as you probably guessed, <code>require_tree</code> inlines a whole directory and subdirectories of scripts).
 </p>
 
+<p>
+  In case it wasn't clear before: the boot script is loaded in the manifest as well. What matters is separating runtime logic from loading. Removing the boot script from the manifest will load everything, but nothing will happen. The modules will be loaded and available, but won't be used and they won't modify anything. That's the expected behaviour.
+</p>
+
+<%= partial :- %>
+
+<p>
+  When the boot script is loaded, it will run things, as in it'll instantiate classes, run module methods, and so on. So this script is the only one that will, when loaded, change the state of the app and the browser.
+</p>
+
+<p>
+  You could argue that anything that puts a variable in the <code>window</code> scope is, technically, modifying the environment, and thus this is all garbage. But pragmatism is your friend: judiciously placing classes/modules in the global scope is fine, as it happens with nearly every other scripting language such as Python or Ruby (and incidentally not with node.js). The important part is not have a module <strong>do</strong> anything as it gets loaded.
+</p>
+
+<p>
+  What a boot script will run, it depends on it's purpose. For really loading the app, you'll likely have it create collections that are shared among views, initialise the router and kick off <code>history</code> tracking, setup events that are to be broadcasted, and so on. For testing a specific view, for example, you'll likely leave all those out and only run what's necessary to set up it's test cases. It's easier to write a boot file for each purpose.
+</p>
+
+<pre class="language-coffeescript"><code># App boot script
+# ===============
+#
+# Presuming that we're not using browserify to illustrate the point.
+
+# Main app class.
+window.BookStore = new App
+
+# The user using the app.
+BookStore.User = new User
+
+# Shared collections.
+BookStore.Books = new Books
+BookStore.Articles = new Articles
+
+# We'll use this &lt;body&gt; reference to put some views in it below.
+$body = $ 'body'
+
+# Views that will exist regardless of what URL you are.
+header = new Header
+$body.append header.render().el
+menu = new MainMenu
+$body.append menu.render().el
+
+# A module for capturing global ajax errors.
+GlobalErrors.initialize()
+
+# A module for tracking and broadcasting page scrolling events.
+Scrolling.initialize()
+
+# The router. We don't usually need to keep a reference to it.
+new Router
+
+# Kick off the router code.
+Backbone.history.start pushState: yes</code></pre>
+
+<p>
+  Some will argue views should always be built within the router (through a controller as we explained in the respective chapter). It depends on how you structure the application. The assumption here is those two views will always appear regardless of the URL you arrive in the app from. So it makes sense. And that's just it: it has to make sense.
+</p>
+
 <%= partial :- %>
 
 <p>
@@ -118,3 +176,7 @@ class BookList extends Backbone.View
 <p>
   And always do that separately from the class/module declaration itself.
 </p>
+
+<%= partial :- %>
+
+Passing server data to a JS app as a good thing. i.e.: don't do what Twitter did and failed at it.
