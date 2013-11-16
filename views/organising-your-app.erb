@@ -5,7 +5,7 @@
 </h1>
 
 <p>
-  Code organisation makes or breaks an app, and doing it right isn't just knowing how to separate models, collections, and views. That's the easy part. The part where most fail is knowing what should be separated from loading and runtime.
+  Code organisation makes or breaks an app, and doing it right isn't just knowing how to separate models, collections, and views. That's the easy part. The part where most fail is knowing what should be separating concerns such as loading and runtime.
 </p>
 
 <p>
@@ -13,21 +13,21 @@
 </p>
 
 <p>
-  The boot script is especially important for keeping control over what gets used and when, so when writing a test case for a view, you'll want to load it, setup mocks for any models/collections it uses, instance it passing the mocks to it, and then test it's features, in this order. If loading a module means running it, it's <strong>a lot</strong> harder to do that.
+  Isolating runtime with a boot script is especially important for keeping control over what gets used and when, so when writing a test case for a view, you'll want to load it, setup mocks for any models/collections it uses, instance it passing the mocks to it, and then test it's features, in this order. If merely loading a module means running it, it's <strong>a lot</strong> harder to do that.
 </p>
 
 <%= partial :- %>
 
 <p>
-  The manifest file is a list of scripts needed for your app to work. Things will really diverge here depending on what back-end or build system you are using.
+  The manifest file is a list of scripts needed for your app to work. Process-wise, things will really diverge here depending on what back-end or build system you are using.
 </p>
 
 <p>
-  Rails uses <a href="https://github.com/sstephenson/sprockets">Sprockets</a>, which is also available on Sinatra through the <a href="https://github.com/kalasjocke/sinatra-asset-pipeline">sinatra-asset-pipeline</a> project, as well as being usable <a href="https://github.com/juliocesar/hopla.io/blob/master/Rakefile#L66">on it's own</a>. For JavaScript/node.js there's <a href="http://gruntjs.com/">Grunt</a>. Most Grunt workflows consist of writing a task declaring an array of files which will get concatenated into a single file.
+  Rails uses <a href="https://github.com/sstephenson/sprockets">Sprockets</a>, which is also available on Sinatra through the <a href="https://github.com/kalasjocke/sinatra-asset-pipeline">sinatra-asset-pipeline</a> project, as well as being usable <a href="https://github.com/juliocesar/hopla.io/blob/master/Rakefile#L66">on it's own</a>. For JavaScript/node.js there's <a href="http://gruntjs.com/">Grunt</a>. Most Grunt workflows consist of writing a task declaring an array of files which will get concatenated into a single file. In which case, your manifest is in the task itself.
 </p>
 
 <p>
-  Regardless of the tooling you choose, both will achieve the same: take a bunch of files and turn them into one, the file you'll serve. With adequate caching set for both HTML and this script, and appending a digest to the script file name, your setup is pretty damn good.
+  Regardless of the tool you choose, both will achieve the same, which is taking a bunch of scripts and turn them into one, allowing you to serve a single file instea of many. With adequate caching set for both HTML and this script, and appending a digest to the scripts manifest file name, your setup is pretty damn good.
 </p>
 
 <p>
@@ -106,11 +106,11 @@
 </p>
 
 <p>
-  You could argue that anything that puts a variable in the <code>window</code> scope is, technically, modifying the environment, and thus this is all garbage. But pragmatism is your friend: judiciously placing classes/modules in the global scope is fine, as it happens with nearly every other scripting language such as Python or Ruby (and incidentally not with node.js). The important part is not have a module <strong>do</strong> anything as it gets loaded.
+  You could argue that anything that puts a variable in the <code>window</code> scope is, in reality, modifying the environment, and thus this is all garbage. But pragmatism is your friend: judiciously placing classes/modules in the global scope is fine, as it happens with nearly every other scripting language such as Python or Ruby (and incidentally not with node.js).
 </p>
 
 <p>
-  What a boot script will run, it depends on it's purpose. For really loading the app, you'll likely have it create collections that are shared among views, initialise the router and kick off <code>history</code> tracking, setup events that are to be broadcasted, and so on. For testing a specific view, for example, you'll likely leave all those out and only run what's necessary to set up it's test cases. It's easier to write a boot file for each purpose.
+  What classes/modules a boot script will refer to, it depends on it's purpose and a little on the choice of architecture. For really loading the app, you'll likely have it create collections that are shared among views, initialise the router and kick off <code>history</code> tracking, setup events that are to be broadcasted, and so on. For testing a specific view, for example, you'll likely leave all those out and only run what's necessary to set up it's test cases. It's easier to write a boot file for each purpose.
 </p>
 
 <pre class="language-coffeescript"><code># App boot script
@@ -150,13 +150,17 @@ new Router
 Backbone.history.start pushState: yes</code></pre>
 
 <p>
-  Some will argue views should always be built within the router (through a controller as we explained in the respective chapter). It depends on how you structure the application. The assumption here is those two views will always appear regardless of the URL you arrive in the app from, so it makes sense. And that's the only rule: it has to make sense and work well without ruining modularity and/or separation of concerns.
+  Some will argue views should always be built within the router (through a controller as we explained in the respective chapter). It depends on how you structure the application. The example above assumes those two views will always appear regardless of the URL you arrive in the app from, so it makes sense. And that's the only rule to almost anything: it has to make sense and work well without ruining modularity and/or separation of concerns.
 </p>
 
 <%= partial :- %>
 
 <p>
-  There's an “export hack” you should write in every script. It goes like this:
+  Aim for writing all modules as if they could run not only within the app you're building them for, but in any other past and future apps too. Other concerns necessary to make happen aside, regarding how you're able to load it, that's one of the easier problems to solve.
+</p>
+
+<p>
+  Never write a module in a way it's only loadable if you're using browserify’s (or more accurately, node.js’) module system, nor as if it requires exporting to a global scope exclusively. Addressing both simultaneously is trivial:
 </p>
 
 <pre class="language-coffeescript"><code># Book list view
@@ -174,9 +178,11 @@ class BookList extends Backbone.View
 </p>
 
 <p>
-  And always do that separately from the class/module declaration itself.
+  So the above will work with or without browserify. If you are using it, you'll need to <code>require('book-list')</code> first to get the object out in order to be able to instance it. Otherwise, just loading the script will make <code>BookList</code> available in the global scope.
 </p>
 
 <%= partial :- %>
 
-Passing server data to a JS app as a good thing. i.e.: don't do what Twitter did and failed at it.
+<p>
+
+</p>
