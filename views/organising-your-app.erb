@@ -5,15 +5,320 @@
 </h1>
 
 <p>
-  Code organisation makes or breaks an app. And doing it right isn't just knowing how to separate models, collections, and views. That's all fairly obvious. The part where most fail is knowing how to load things properly, and knowing what should be separated from instancing time and runtime.
+  Code organisation makes or breaks an app, and doing it right isn't just knowing how to separate models, collections, and views. That's the easy part. The part where most fail is knowing what should be separating concerns such as loading and runtime.
 </p>
 
 <p>
-  The formula we'll use here is simple: we'll write a manifest file and a boot script.
+  The formula we'll use here is simple and yet very effective: we'll write a manifest file and a boot script. The manifest will pull all your scripts in (loading), and the boot script is where the base app classes/modules will be instanced (runtime).
+</p>
+
+<p>
+  Isolating runtime with a boot script is especially important for keeping control over what gets used and when, so when writing a test case for a view, you'll want to load it, setup mocks for any models/collections it uses, instance it passing the mocks to it, and then test it's features, in this order. If merely loading a module means running it, it's <strong>a lot</strong> harder to do that.
 </p>
 
 <%= partial :- %>
 
 <p>
-  The manifest file is a list of all scripts that are needed for your app to work. Things will really diverge here depending on what back-end or build system you are using: Rails uses <a href="https://github.com/sstephenson/sprockets">Sprockets</a>, and Sprockets is also available on Sinatra through the <a href="https://github.com/kalasjocke/sinatra-asset-pipeline">sinatra-asset-pipeline</a> project, and it's usable as
+  The manifest file is a list of scripts needed for your app to work. Process-wise, things will really diverge here depending on what back-end or build system you are using.
+</p>
+
+<p>
+  Rails uses <a href="https://github.com/sstephenson/sprockets">Sprockets</a>, which is also available on Sinatra through the <a href="https://github.com/kalasjocke/sinatra-asset-pipeline">sinatra-asset-pipeline</a> project, as well as being usable <a href="https://github.com/juliocesar/hopla.io/blob/master/Rakefile#L66">on it's own</a>. For JavaScript/node.js there's <a href="http://gruntjs.com/">Grunt</a>. Most Grunt workflows consist of writing a task declaring an array of files which will get concatenated into a single file. In which case, your manifest is in the task itself.
+</p>
+
+<p>
+  Regardless of the tool you choose, both will achieve the same, which is taking a bunch of scripts and turn them into one, allowing you to serve a single file instea of many. With adequate caching set for both HTML and this script, and appending a digest to the scripts manifest file name, your setup is pretty damn good.
+</p>
+
+<p>
+  There's also an entirely different approach to this problem which is dynamically loading scripts as you need them, and the most popular tool for it is <a href="http://requirejs.org/">require.js</a>. By all means, check it out. It won't be covered here though.
+</p>
+
+<%= partial :- %>
+
+<p>
+  With Sprockets, an expanded manifest file looks like this. This is actually an excellent way to explain how it conceptually works, even if you're planning on using Grunt.
+</p>
+
+<pre class="language-coffeescript"><code># App scripts manifest
+# ====================
+
+# Dependencies.
+#= require vendor/jquery
+#= require vendor/underscore
+#= require vendor/backbone
+
+# Data layer.
+#= require models/user
+#= require models/book
+#= require models/cart
+#= require models/comment
+#= require collections/books
+#= require collections/comments
+
+# Views.
+#= require views/books/list
+#= require views/books/show
+#= require views/user/show
+# …
+
+# The router.
+#= require router
+
+# App boot script.
+#= require boot</code></pre>
+
+<pre class="language-javascript"><code>// App scripts manifest
+// ====================
+
+// Dependencies.
+//= require vendor/jquery
+//= require vendor/underscore
+//= require vendor/backbone
+
+// Data layer.
+//= require models/user
+//= require models/book
+//= require models/cart
+//= require models/comment
+//= require collections/books
+//= require collections/comments
+
+// Views.
+//= require views/books/list
+//= require views/books/show
+//= require views/user/show
+// …
+
+// The router.
+//= require router
+
+// App boot script.
+//= require boot</code></pre>
+
+<p>
+  Which should be refactored to this:
+</p>
+
+<pre class="language-coffeescript"><code># App scripts manifest
+# ====================
+
+# Dependencies.
+#= require_tree ./vendor
+
+# Data layer.
+#= require_tree ./models
+#= require_tree ./collections
+
+# Views.
+#= require_tree views
+
+# The router.
+#= require router
+
+# App boot script.
+#= require boot</code></pre>
+
+<pre class="language-javascript"><code>// App scripts manifest
+// ====================
+
+// Dependencies.
+//= require_tree ./vendor
+
+// Data layer.
+//= require_tree ./models
+//= require_tree ./collections
+
+// Views.
+//= require_tree views
+
+// The router.
+//= require router
+
+// App boot script.
+//= require boot</code></pre>
+
+<p>
+  When Sprockets compiles this script, it'll inline all the files <code>require</code>d by it (and as you probably guessed, <code>require_tree</code> inlines a whole directory and subdirectories of scripts).
+</p>
+
+<p>
+  In case it wasn't clear before: the boot script is loaded in the manifest as well. What matters is separating runtime logic from loading. Removing the boot script from the manifest will load everything, but nothing will happen. The modules will be loaded and available, but won't be used and they won't modify anything. That's the expected behaviour.
+</p>
+
+<%= partial :- %>
+
+<p>
+  When the boot script is loaded, it will run things, as in it'll instantiate classes, run module methods, and so on. So this script is the only one that will, when loaded, change the state of the app and the browser.
+</p>
+
+<p>
+  You could argue that anything that puts a variable in the <code>window</code> scope is, in reality, modifying the environment, and thus this is all garbage. But pragmatism is your friend: judiciously placing classes/modules in the global scope is fine, as it happens with nearly every other scripting language such as Python or Ruby (and incidentally not with node.js).
+</p>
+
+<p>
+  What classes/modules a boot script will refer to, it depends on it's purpose and a little on the choice of architecture. For really loading the app, you'll likely have it create collections that are shared among views, initialise the router and kick off <code>history</code> tracking, setup events that are to be broadcasted, and so on. For testing a specific view, for example, you'd leave all those out and only run what's absolutely necessary to set up it's test cases. It's easier to write a boot file for each purpose.
+</p>
+
+<pre class="language-coffeescript"><code># App boot script
+# ===============
+#
+# Presuming that we're not using browserify to illustrate the point.
+
+# Main app class.
+window.BookStore = new App
+
+# The user using the app.
+BookStore.User = new User
+
+# Shared collections.
+BookStore.Books = new Books
+BookStore.Articles = new Articles
+
+# We'll use this &lt;body&gt; reference to put some views in it below.
+$body = $ 'body'
+
+# Views that will exist regardless of what URL you are.
+header = new Header
+$body.append header.render().el
+menu = new MainMenu
+$body.append menu.render().el
+
+# A module for capturing global ajax errors.
+GlobalErrors.initialize()
+
+# A module for tracking and broadcasting page scrolling events.
+Scrolling.initialize()
+
+# The router. We usually don't need to keep a reference to it.
+new Router
+
+# Kick off the router code.
+Backbone.history.start pushState: yes</code></pre>
+
+<pre class="language-javascript"><code>// App boot script
+// ===============
+//
+// Presuming that we're not using browserify to illustrate the point.
+
+// Main app class.
+window.BookStore = new App;
+
+// The user using the app.
+BookStore.User = new User;
+
+// Shared collections.
+BookStore.Books = new Books;
+BookStore.Articles = new Articles;
+
+// We'll use this &lt;body&gt; reference to put some views in it below.
+var $body = $('body');
+
+// Views that will exist regardless of what URL you are.
+var header = new Header;
+$body.append(header.render().el);
+var menu = new MainMenu;
+$body.append(menu.render().el);
+
+// A module for capturing global ajax errors.
+GlobalErrors.initialize();
+
+// A module for tracking and broadcasting page scrolling events.
+Scrolling.initialize();
+
+// The router. We usually don't need to keep a reference to it.
+new Router;
+
+// Kick off the router code.
+Backbone.history.start({pushState: true});</code></pre>
+
+<p>
+  Some will argue views should always be built within the router (through a controller as we explained in the respective chapter). It depends on how you structure the application. The example above assumes those two views will always appear regardless of the URL you arrive in the app from, so it makes sense. And that's the only rule to almost anything: it has to make sense and work well without ruining modularity and/or separation of concerns.
+</p>
+
+<%= partial :- %>
+
+<p>
+  Aim for writing all modules as if they could run not only within the app you're building them for, but in past and future apps too. Other concerns necessary to make happen aside, regarding how you're able to load it, that's one of the easier problems to solve.
+</p>
+
+<p>
+  Never write a module in a way it's only loadable if you're using browserify’s (or more accurately, node.js’) module system, nor as if it requires exporting to a global scope exclusively. Instead, address both simultaneously:
+</p>
+
+<pre class="language-coffeescript"><code># Book list view
+# ==============
+
+class BookList extends Backbone.View
+  # …
+  # …
+  # …
+
+(module?.exports = BookList) or @BookList = BookList</code></pre>
+
+<pre class="language-javascript"><code>// Book list view
+// ==============
+
+(function(global) {
+  var BookList = Backbone.View.extend({
+    # …
+    # …
+    # …
+  });
+
+  if (typeof module !== undefined) {
+    module.exports = BookList;
+  } else {
+   global.BookList = BookList;
+  }
+})(this);</code></pre>
+
+<p>
+  That last line will check for the existence of the <code>module</code> keyword, and if it exists, it'll assign the <code>BookList</code> object to it. Or if <code>module</code> doesn't exist, assign <code>BookList</code> to the global scope. This ensures regardless of whether you're using a module system or just loading the script as is, the end result is the product is always where you expect it to be.
+</p>
+
+<p>
+  So the above will work with or without browserify. If you are using it, you'll need to <code>require('book-list')</code> first to get the class out in order to be able to instance it. Otherwise, just loading the script will make <code>BookList</code> available in the global scope.
+</p>
+
+<%= partial :- %>
+
+<p>
+  Almost never a JavaScript app is written without it being the front-end for a server application. And most server applications use templates to render HTML, templates that have access to the it's data. A good build will make use of that to avoid unnecessary roundtrips to the server. This may sound like a departure from the model you're going for, which is the app fetching data from the server via ajax when it needs it, but the gains are tremendous, so forgoing that over dogma is stupid.
+</p>
+
+<p>
+  If on the landing screen of our app we display an initial set of books, we can preload the book objects in the markup itself within a <code>&lt;script&gt;</code> tag, which our app can then pick up in it's boot script.
+</p>
+
+<pre class="language-coffeescript"><code>…
+%script
+  window.InitialBooks = &lt;%= initial_set_of_books_as_json %&gt;;
+%script(src="/javascripts/manifest.js")</code></pre>
+
+<pre class="language-javascript"><code>…
+&lt;script&gt;
+  window.InitialBooks = &lt;%= initial_set_of_books_as_json %&gt;
+&lt;/script&gt;
+&lt;script src=&quot;/javascripts/manifest.js&quot;&gt;&lt;/script&gt;</code></pre>
+
+<p>
+  And in the boot file:
+</p>
+
+<pre class="language-coffeescript"><code>…
+if InitialBooks? and not _.isEmpty(InitialBooks)
+  BookStore.Books.reset InitialBooks</code></pre>
+
+<pre class="language-javascript"><code>…
+if ((typeof InitialBooks !== undefined) &amp;&amp; (!_.isEmpty(InitialBooks))) {
+  BookStore.Books.reset(InitialBooks);
+}</code></pre>
+
+<p>
+  By the time the corresponding route/controller gets a view to act on <code>BookStore.Books</code>, the view will find the collection has records and it’ll just render them. Given how fast that'll happen, the experience will feel as it those records were rendered with the HTML itself (instantly).
+</p>
+
+<p>
+  <strong>Do not</strong> fall for arguments over whether this creates tangling between the server and the client, or baseless “this is a bad idea” point of views. It simply isn't. If you remove the part of the template that exports the records, when rendering the screen the route/controller will still perform check if the collection is empty, and since in that case it would be, a <code>fetch()</code> would occur and everything would work fine minus the benefit of avoiding the roundtrip.
 </p>
