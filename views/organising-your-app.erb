@@ -174,15 +174,40 @@ class BookList extends Backbone.View
 (module?.exports = BookList) or @BookList = BookList</code></pre>
 
 <p>
-  That last line will check for the existence of the <code>module</code> keyword, and if it exists, it'll assign the <code>BookList</code> object to it. Or if <code>module</code> does not exist, assign <code>BookList</code> to the global scope. This ensures regardless of whether you're using a module system or just loading the script as is, the end result is the product is always where you expect it to be.
+  That last line will check for the existence of the <code>module</code> keyword, and if it exists, it'll assign the <code>BookList</code> object to it. Or if <code>module</code> doesn't exist, assign <code>BookList</code> to the global scope. This ensures regardless of whether you're using a module system or just loading the script as is, the end result is the product is always where you expect it to be.
 </p>
 
 <p>
-  So the above will work with or without browserify. If you are using it, you'll need to <code>require('book-list')</code> first to get the object out in order to be able to instance it. Otherwise, just loading the script will make <code>BookList</code> available in the global scope.
+  So the above will work with or without browserify. If you are using it, you'll need to <code>require('book-list')</code> first to get the class out in order to be able to instance it. Otherwise, just loading the script will make <code>BookList</code> available in the global scope.
 </p>
 
 <%= partial :- %>
 
 <p>
+  Almost never a JavaScript app is written without it being the front-end for a server application. And most server applications use templates to render HTML, templates that have access to the it's data. A good build will make use of that to avoid unnecessary roundtrips to the server. This may sound like a departure from the model you're going for, which is the app fetching data from the server via ajax when it needs it, but the gains are tremendous, so forgoing that over dogma is stupid.
+</p>
 
+<p>
+  If on the landing screen of our app we display an initial set of books, we can preload the book objects in the markup itself within a <code>&lt;script&gt;</code> tag, which our app can then pick up in it's boot script.
+</p>
+
+<pre class="language-coffeescript"><code>…
+%script
+  window.InitialBooks = &lt;%= initial_set_of_books_as_json %&gt;;
+%script(src="/javascripts/manifest")</code></pre>
+
+<p>
+  And in the boot file:
+</p>
+
+<pre class="language-coffeescript"><code>…
+if InitialBooks? and not _.isEmpty(InitialBooks)
+  BookStore.Books.reset InitialBooks</code></pre>
+
+<p>
+  By the time the corresponding route/controller gets a view to act on <code>BookStore.Books</code>, the view will find the collection has records and it’ll just render them. Given how fast that'll happen, the experience will feel as it those records were rendered with the HTML itself (instantly).
+</p>
+
+<p>
+  <strong>Do not</strong> fall for arguments over whether this creates tangling between the server and the client, or baseless “this is a bad idea” point of views. It simply isn't. If you remove the part of the template that exports the records, when rendering the screen the route/controller will still perform check if the collection is empty, and since in that case it would be, a <code>fetch()</code> would occur and everything would work fine minus the benefit of avoiding the roundtrip.
 </p>
