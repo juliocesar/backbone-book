@@ -110,7 +110,7 @@
 </p>
 
 <p>
-  What classes/modules a boot script will refer to, it depends on it's purpose and a little on the choice of architecture. For really loading the app, you'll likely have it create collections that are shared among views, initialise the router and kick off <code>history</code> tracking, setup events that are to be broadcasted, and so on. For testing a specific view, for example, you'll likely leave all those out and only run what's necessary to set up it's test cases. It's easier to write a boot file for each purpose.
+  What classes/modules a boot script will refer to, it depends on it's purpose and a little on the choice of architecture. For really loading the app, you'll likely have it create collections that are shared among views, initialise the router and kick off <code>history</code> tracking, setup events that are to be broadcasted, and so on. For testing a specific view, for example, you'd leave all those out and only run what's absolutely necessary to set up it's test cases. It's easier to write a boot file for each purpose.
 </p>
 
 <pre class="language-coffeescript"><code># App boot script
@@ -156,11 +156,11 @@ Backbone.history.start pushState: yes</code></pre>
 <%= partial :- %>
 
 <p>
-  Aim for writing all modules as if they could run not only within the app you're building them for, but in any other past and future apps too. Other concerns necessary to make happen aside, regarding how you're able to load it, that's one of the easier problems to solve.
+  Aim for writing all modules as if they could run not only within the app you're building them for, but in past and future apps too. Other concerns necessary to make happen aside, regarding how you're able to load it, that's one of the easier problems to solve.
 </p>
 
 <p>
-  Never write a module in a way it's only loadable if you're using browserify’s (or more accurately, node.js’) module system, nor as if it requires exporting to a global scope exclusively. Addressing both simultaneously is trivial:
+  Never write a module in a way it's only loadable if you're using browserify’s (or more accurately, node.js’) module system, nor as if it requires exporting to a global scope exclusively. Instead, address both simultaneously:
 </p>
 
 <pre class="language-coffeescript"><code># Book list view
