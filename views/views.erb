@@ -60,7 +60,7 @@
   Following the previous tip means it’s mostly up to the template to handle every possible state of the model, and things can get hairy if you happen to have a bunch of those. For example, in the following <a href="https://github.com/netzpirat/haml-coffee">haml-coffee</a> template:
 </p>
 
-<pre><code>- if @model.get('paid') and not @model.get('returned')
+<pre class="language-coffeescript"><code>- if @model.get('paid') and not @model.get('returned')
   %p
     This book is paid for! Thanks!
 - else if @model.get('overdue')
@@ -70,6 +70,20 @@
   %p
     You returned this book to the store. Here’s your money back.
 # ...</code></pre>
+
+<pre class="language-javascript"><code>&lt;% if (this.model.get('paid') &amp;&amp; (!this.model.get('returned')) { %&gt;
+  &lt;p&gt;
+    This book is paid for! Thanks!
+  &lt;/p&gt;
+&lt;% } else if (this.model.get('overdue')) { %&gt;
+  &lt;p&gt;
+    You need to pay for this book immediately!
+  &lt;/p&gt;
+&lt;% } else if (this.model.get('paid') && this.model.get('returned')) { %&gt;
+  &lt;p&gt;
+    You returned this book to the store. Here’s your money back.
+  &lt;/p&gt;
+// ...</code></pre>
 
 <p>
   This example happens to be quite slim, but any 4+ tags with a lot of copy that you put in between each state, or maybe every permutation of states meaning a different copy needs to be shown, and you’re looking at a huge template in charge of too much.
@@ -179,10 +193,16 @@ var BookPresenter = _.extend(ModelPresenter.prototype, {
   Now the template can be vastly simplified:
 </p>
 
-<pre><code>- if @isPaid()
+<pre class="language-coffeescript"><code>- if @isPaid()
   = partial JST['books/paid_notice']
 - else if @isReturned()
   = partial JST['books/returned_notice']</code></pre>
+
+<pre class="language-javascript"><code>&lt;% if (this.isPaid()) { %&gt;
+  &lt;%= partial(JST['books/paid_notice']) %&gt;
+&lt;% } else if (this.isReturned()) { %&gt;
+  &lt;%= partial (JST['books/returned_notice']) %&gt;
+&lt;% } %&gt;</code></pre>
 
 <p>
   Or you could go even further and make the <code>partial</code> method in <code>ModelPresenter</code> prettier, though then dependent on the <code>JST</code> object, which contains the templates, being present (pretty certain).
@@ -199,8 +219,12 @@ var BookPresenter = _.extend(ModelPresenter.prototype, {
   You can now call partials like so:
 </p>
 
-<pre><code>- if @isPaid()
+<pre class="language-coffeescript"><code>- if @isPaid()
   = partial 'books/paid_notice'</code></pre>
+
+<pre class="language-javascript"><code>&lt;% if (this.isPaid()) %&gt;
+  &lt;%= partial('books/paid_notice') %&gt;
+&lt;% } %&gt;</code></pre>
 
 <p>
   This may sound like a lot of work, but it’s all boilerplate you’ll write once and carry with you across projects, so it’s very worth it.
@@ -328,9 +352,15 @@ var BookPresenter = _.extend(ModelPresenter.prototype, {
 
 <p>With the template now containing the root element and its class name along:</p>
 
-<pre><code>%li.book-list-entry
+<pre class="language-coffeescript"><code>%li.book-list-entry
   %h1= @title
   ...</code></pre>
+
+<pre class="language-javascript"><code>&lt;li class=&quot;book-list-entry&quot;&gt;
+  &lt;h1&gt;
+    &lt;%= this.title %&gt;
+  &lt;/h1&gt;
+  …</code></pre>
 
 <p>
   Bear in mind you may need to copy more than just the markup from <code>newEl</code>, but also it's <code>class</code> attribute.
