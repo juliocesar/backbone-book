@@ -1,2 +1,0 @@
-* URLs, when triggered, will call functions via your router. These functions will load data by getting the data layer to fetch it from somewhere, and give said data to one or more views to render.
-* The pattern of instancing a new collection and populating it every time you visit a URL is wrong for most cases. You want to fetch and keep things around as much as possible to make the app fast for situations like hitting the back button. So create a "global" collection of `Book` and as you
