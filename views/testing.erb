@@ -1,0 +1,23 @@
+<% @title = 'Testing' %>
+
+<h1>
+  Testing
+</h1>
+
+<p>
+  Testing browser applications can be a world of hurt, or as easy as something depending on your architecture choices. That's so because there are invariably too many external moving parts involved in running an app, and way mankind seems to have settled on doing it is by applying a whole browser engine to it. Fact is, all things considered, there's probably no other way with current technology if the DOM is involved, and therein lies the trick: involving the DOM as least as possible.
+</p>
+
+<p>
+  Data-binding — available out of the box in Ember or Angular, and through libraries for Backbone — tends to make that a lot easier because you're effectively delegating all DOM interactions to the library, allowing you to assume the visual updates are working fine, and consequently allowing you to test the logic of you app exclusively at the JavaScript level.
+</p>
+
+<p>
+  This won't be covered here, though. If you followed the tips given thus far in this booklet, you should have an app that's fairly detached from the DOM anyway. The lot of the logic behind it will be testable minus your views' <code>render</code> method. For that, you will need to drop to browser testing. The upside is those tests will be few.
+</p>
+
+<p>
+  One final word about testing: it's not, and will never be, a recipe for high quality software. It's but one component of that, and the value you get out of it is directly proportional to your ability to architect software correctly. A tested, yet poorly planned app is mistakenly evidenced by tests passing, furthering the illusion that it's based on quality planning.
+</p>
+
+<%= partial :- %>
