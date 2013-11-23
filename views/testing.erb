@@ -5,19 +5,19 @@
 </h1>
 
 <p>
-  Testing browser applications can be a world of hurt, or as easy as something depending on your architecture choices. That's so because there are invariably too many external moving parts involved in running an app, and way mankind seems to have settled on doing it is by applying a whole browser engine to it. Fact is, all things considered, there's probably no other way with current technology if the DOM is involved, and therein lies the trick: involving the DOM as least as possible.
+  Testing browser applications can be very easy or very hard, depending on your architectural choices. That's so because there are too many external moving parts involved in running a browser app, and the way we seem to have settled on doing it is by applying a whole browser engine to it. Fact is, if you test whole interactions such  clicks/taps and such, there's probably no other way to do it. And therein lies the trick: keeping the DOM as detached from the app's logic as possible.
 </p>
 
 <p>
-  Data-binding — available out of the box in Ember or Angular, and through libraries for Backbone — tends to make that a lot easier because you're effectively delegating all DOM interactions to the library, allowing you to assume the visual updates are working fine, and consequently allowing you to test the logic of you app exclusively at the JavaScript level.
+  Data-binding — available out of the box in Ember or Angular, and through libraries for Backbone — tends to make testing a lot easier in that regard because you're effectively delegating all DOM interactions to it, and it consequently allows you to test the app's logic alone and assume all information will be reflected in the DOM correctly.
 </p>
 
 <p>
-  This won't be covered here, though. If you followed the tips given thus far in this booklet, you should have an app that's fairly detached from the DOM anyway. The lot of the logic behind it will be testable minus your views' <code>render</code> method. For that, you will need to drop to browser testing. The upside is those tests will be few.
+  This won't be covered here, though. If you followed the tips given thus far in this booklet, your apps should be fairly detached from the DOM anyway. The lot of the logic behind it will be testable minus your views' <code>render</code> method. For that, you will need to drop to browser testing. The upside is those tests will be few, and you can realistically keep the fast feedback cycle of unit tests going during development.
 </p>
 
 <p>
-  One final word about testing: it's not, and will never be, a recipe for high quality software. It's but one component of that, and the value you get out of it is directly proportional to your ability to architect software correctly. A tested, yet poorly planned app is mistakenly evidenced by tests passing, furthering the illusion that it's based on quality planning.
+  One final word about testing: it's not, and will never be, a recipe for high quality software. The value you get out of it is directly proportional to your ability to architect software correctly. A tested, yet poorly architected app is further evidenced by its tests passing, leaving you under the illusion it's good quality software when it's not.
 </p>
 
 <%= partial :- %>
