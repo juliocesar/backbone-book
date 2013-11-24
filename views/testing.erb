@@ -5,7 +5,7 @@
 </h1>
 
 <p>
-  Testing browser applications can be very easy or very hard, depending on your architectural choices. That's so because there are too many external moving parts involved in running a browser app, and the way we seem to have settled on doing it is by applying a whole browser engine to it. Fact is, if you test whole interactions such  clicks/taps and such, there's probably no other way to do it. And therein lies the trick: keeping the DOM as detached from the app's logic as possible.
+  Testing browser applications can be very easy or very hard, depending on your architectural choices. That's so because there are too many external moving parts involved in running a browser app, and the way we seem to have settled on doing it is by applying a whole browser engine to it. Fact is, when you test interactions such  clicks/taps and such, there's no other way to do it. And therein lies the trick: keeping user interactions and the DOM as detached from the app's logic as possible.
 </p>
 
 <p>
@@ -21,3 +21,38 @@
 </p>
 
 <%= partial :- %>
+
+<p>
+  In the interest of saving you time discovering what the good testing tools are, and have you instead invest time in applying them, the following form a great trio.
+</p>
+
+<p>
+  The best, non-magic testing library is <a href="http://visionmedia.github.io/mocha/">Mocha</a>, period. Mocha won't try to guess how your app works. Your tests will look explicit, so anyone reading a test can immediately understand how something is meant to work, which is the bigger benefit of doing this if you're not alone in maintaining the app.
+</p>
+
+<p>
+  For asserting, you should look into <a href="https://github.com/LearnBoost/expect.js">expect.js</a>.
+</p>
+
+<p>
+  For mocking, check out <a href="http://sinonjs.org/">Sinon.JS</a>.
+</p>
+
+<%= partial :- %>
+
+<p>
+  Test runners come in many shapes and sizes, but they all work the same way: they load core dependencies including the testing library, load the class/module to be tested, set up any mocks if any, then run the testing scripts in that environment.
+</p>
+
+<p>
+  That's all great, but again, avoid packages that make too many assumptions on your behalf, or end up forcing you to write tests that aren't explicit (e.g.: when it's not obvious how you ended up having access to a library you didn't explicitly load yourself). Following the formula above, you should be able to write tests as simple scripts that you can call using the <code>mocha</code> CLI, and they should run fine. If it's <strong>impossible</strong> to run your tests like that, then try and make it so it does.
+</p>
+
+<p>
+  The effort of building your own, tiny version of a tool you use often at least once is well worth it, and a runner is among the easiest. But so long as you understand that's how a test runner works and you choose one that doesn't obscure things, you're good to go.
+</p>
+
+<%= partial :- %>
+
+
+
