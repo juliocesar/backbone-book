@@ -5,11 +5,11 @@
 </h1>
 
 <p>
-  Testing browser applications can be very easy or very hard, depending on your architectural choices. That's so because there are too many external moving parts involved in running a browser app, and the way we seem to have settled on doing it is by applying a whole browser engine to it. Fact is, when you test interactions such  clicks/taps and such, there's no other way to do it. And therein lies the trick: keeping user interactions and the DOM as detached from the app's logic as possible.
+  Testing browser applications can be very easy or very hard, depending on your architectural choices. That's so because there are too many external moving parts involved in running a browser app, and the way we seem to have settled on doing it is by applying a whole browser engine to it. Fact is, when you test interactions such  clicks/taps, there's no other way to do it. And therein lies the trick: keeping user interactions as detached from the app's logic as possible.
 </p>
 
 <p>
-  Data-binding — available out of the box in Ember or Angular, and through libraries for Backbone — tends to make testing a lot easier in that regard because you're effectively delegating all DOM interactions to it, and it consequently allows you to test the logic alone and assume all information will be reflected in the DOM correctly.
+  Data-binding — available out of the box in Ember or Angular, and through libraries for Backbone — tends to make testing a lot easier in that regard because you're effectively delegating the relationship between the DOM and the app to it, and it consequently allows you to test the logic alone and assume all information will be reflected in the DOM correctly.
 </p>
 
 <p>
@@ -106,7 +106,7 @@
 #
 # Run using:
 #
-# $ NODE_PATH=app/assets/javascripts mocha --compilers coffee:coffee-script \
+# $ NODE_PATH=path/to/javascripts mocha --compilers coffee:coffee-script \
 #     test/javascripts/views/form-view.coffee
 
 $        = require 'jquery'
@@ -132,5 +132,15 @@ describe 'FormView', ->
 </p>
 
 <p>
-  And when you write tests for those interactions through browser testing, you can restrict the assertions to checking whether certain API methods were called.
+  And when writing tests for those interactions through browser testing, you can just restrict the assertions to checking whether the appropriate API methods were called.
+</p>
+
+<%= partial :- %>
+
+<p>
+  Following the model above, testing the average model and collection is trivial, but the problem it poses is different: instead of shielding their logic from the DOM, you have to deal with ajax requests fired at the server, and while you could mock the requests (sinon.js can emulate an ajax request with custom responses), the result is you'd have to mirror the API from within your test suite.
+</p>
+
+<p>
+  To be continued...
 </p>
