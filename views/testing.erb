@@ -9,7 +9,7 @@
 </p>
 
 <p>
-  Data-binding — available out of the box in Ember or Angular, and through libraries for Backbone — tends to make testing a lot easier in that regard because you're effectively delegating all DOM interactions to it, and it consequently allows you to test the app's logic alone and assume all information will be reflected in the DOM correctly.
+  Data-binding — available out of the box in Ember or Angular, and through libraries for Backbone — tends to make testing a lot easier in that regard because you're effectively delegating all DOM interactions to it, and it consequently allows you to test the logic alone and assume all information will be reflected in the DOM correctly.
 </p>
 
 <p>
@@ -17,7 +17,7 @@
 </p>
 
 <p>
-  One final word about testing: it's not, and will never be, a recipe for high quality software. The value you get out of it is directly proportional to your ability to architect software correctly. A tested, yet poorly architected app is further evidenced by its tests passing, leaving you under the illusion it's good quality software when it's not.
+  One final word about testing: it's not, and will never be, a recipe for high quality software. The value you get out of it is proportional to your ability to architect software correctly. A tested, yet poorly architected app is further evidenced by its tests passing, leaving you under the illusion it's good quality software when it's not.
 </p>
 
 <%= partial :- %>
@@ -49,10 +49,88 @@
 </p>
 
 <p>
-  The effort of building your own, tiny version of a tool you use often at least once is well worth it, and a runner is among the easiest. But so long as you understand that's how a test runner works and you choose one that doesn't obscure things, you're good to go.
+  The point is you want to stay away from a runner that obscures things. To a degree, there are exceptions to this rule: if you're using Rails, <a href="https://github.com/modeset/teaspoon">teaspoon</a> offers seamless integration with Sprockets, allowing you to use directives such as <code>require</code> inside a test script, so you retain the benefit of being able to load things in the style of a manifest while still keeping the test's dependencies explicitly declared.
 </p>
 
 <%= partial :- %>
 
+<p>
+  Say we have a <code>FormView</code> view, whose purpose is to capture input from a form and create or edit a <code>Book</code> model. We know this view will need to capture the form <code>submit</code> event, pull out the values from each field and instance a new model (or set the existing one) with the attributes set to the values in the form.
+</p>
 
+<pre class="language-coffeescript"><code>class FormView extends Backbone.View
+  template: JST['books/form']
+  events:
+    'submit form': 'submitForm'
 
+  initialize: (options = {}) ->
+    @model = @model ? options.model
+
+  submitForm: (event) ->
+    event.preventDefault()
+    @model.set
+      name: @$el.find('.name').val(),
+      description: @$el.find('.description').val()
+    @collection.add @model
+    @model.save()</code></pre>
+
+<p>
+  The above works, so it <strong>seems</strong> correct. But there's a big problem here: there's no way to verify this works without an actual form element existing, and for that matter, without this view having been rendered. We need to isolate the model creation logic so it can be tested separately. As an aside, this is an excellent example of code that passes tests, but it is, nevertheless, a bad idea.
+</p>
+
+<pre class="language-coffeescript"><code>class FormView extends Backbone.View
+  template: JST['books/form']
+  events:
+    'submit form': 'submitForm'
+
+  initialize: (options = {}) ->
+    @model = @model ? options.model
+
+  submitForm: (event) ->
+    event.preventDefault()
+    @createOrUpdateModel
+      name: @$el.find('.name').val(),
+      description: @$el.find('.description').val()
+
+  createOrUpdateModel: (attributes) ->
+    @model.set attributes
+    @collection.add @model
+    @model.save()</code></pre>
+
+<p>
+  You can now test the feature like this:
+</p>
+
+<pre class="language-coffeescript"><code># FormView tests
+# ============
+#
+# Run using:
+#
+# $ NODE_PATH=app/assets/javascripts mocha --compilers coffee:coffee-script \
+#     test/javascripts/views/form-view.coffee
+
+$        = require 'jquery'
+Backbone = require 'backbone'
+FormView = require 'views/form-view'
+
+# Backbone.$ will be undefined unless you assign it.
+Backbone.$ = $
+
+describe 'FormView', ->
+  it "creates a model and adds to its collection when none is passed", ->
+    view = new FormView
+    view.createOrUpdateModel {}
+    expect(view.collection.length).to.be 1
+
+  it "updates its model with the parameters passed", ->
+    view = new FormView model: (new Backbone.Model)
+    view.createOrUpdateModel name: 'foo'
+    expect(view.model.get 'name').to.be 'foo'</code></pre>
+
+<p>
+  In short, the callback methods in the <code>events</code> object — originated from user interactions — aren't tested here. The callbacks will never contain logic beyond handling the interaction itself, and will instead refer to other methods that take simple data structures as parameters, which constitute the class/module's real API.
+</p>
+
+<p>
+  And when you write tests for those interactions through browser testing, you can restrict the assertions to checking whether certain API methods were called.
+</p>
