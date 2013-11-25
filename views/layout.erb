@@ -13,25 +13,53 @@
   </head>
   <body class="<%= @class ? @class : "chapter" %>">
     <%= yield %>
+    <menu class="toggler">
+      <div class="the-rotator">
+        <button class="switch-to-cs-button">C</button>
+        <button class="switch-to-js-button">J</button>
+      </div>
+    </menu>
     <%= javascript_tag 'prism' %>
     <script>
       (function(d) {
-        var languages = ['coffeescript', 'javascript]'];
+        var languages = ['coffeescript', 'javascript'];
         var selected = localStorage['language'];
-        if (!selected) selected = 'coffeescript'
-        d.body.classList.add('language-' + selected);
-        d.addEventListener("keypress", function(event) {
-          if (!event.keyCode === 115) return;
-          if (d.body.classList.contains('language-coffeescript')) {
-            d.body.classList.remove('language-coffeescript');
-            d.body.classList.add('language-javascript');
+        var touch = 'ontouchstart' in window;
+
+        var switchTo = function(language) {
+          if (language === 'javascript') {
+            document.body.classList.remove('language-coffeescript');
+            document.body.classList.add('language-javascript');
             localStorage['language'] = 'javascript';
-          } else {
+            selected = 'javascript';
+          } else if (language === 'coffeescript') {
             d.body.classList.remove('language-javascript');
             d.body.classList.add('language-coffeescript');
             localStorage['language'] = 'coffeescript';
+            selected = 'coffeescript';
+          }
+        };
+
+        d.addEventListener("keypress", function(event) {
+          if (!event.keyCode === 115) return;
+          if (selected === 'javascript') {
+            switchTo('coffeescript');
+          } else {
+            switchTo('javascript');
           }
         }, false);
+
+        var switchToJS = d.querySelector('.switch-to-js-button');
+        var switchToCS = d.querySelector('.switch-to-cs-button');
+        var eventName = touch ? 'touchend' : 'click';
+        switchToJS.addEventListener(eventName, function() {
+          switchTo('javascript');
+        }, false);
+        switchToCS.addEventListener(eventName, function() {
+          switchTo('coffeescript');
+        }, false);
+
+        switchTo(selected || 'coffeescript');
       })(document);
     </script>
     <script>
