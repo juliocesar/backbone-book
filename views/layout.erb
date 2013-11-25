@@ -13,12 +13,13 @@
   </head>
   <body class="<%= @class ? @class : "chapter" %>">
     <%= yield %>
-    <menu class="toggler">
-      <div class="the-rotator">
-        <button class="switch-to-cs-button">C</button>
-        <button class="switch-to-js-button">J</button>
+    <div class="toggler-menu">
+      <!-- A proper <button> here makes the transition screwy -->
+      <div class="toggler-button">
+        <span class="coffeescript-label">C</span>
+        <span class="javascript-label">J</span>
       </div>
-    </menu>
+    </div>
     <%= javascript_tag 'prism' %>
     <script>
       (function(d) {
@@ -49,16 +50,15 @@
           }
         }, false);
 
-        var switchToJS = d.querySelector('.switch-to-js-button');
-        var switchToCS = d.querySelector('.switch-to-cs-button');
+        var togglerButton = d.querySelector('.toggler-button');
         var eventName = touch ? 'touchend' : 'click';
-        switchToJS.addEventListener(eventName, function() {
-          switchTo('javascript');
+        togglerButton.addEventListener(eventName, function() {
+          if (selected === 'javascript') {
+            switchTo('javascript');
+          } else {
+            switchTo('coffeescript');
+          }
         }, false);
-        switchToCS.addEventListener(eventName, function() {
-          switchTo('coffeescript');
-        }, false);
-
         switchTo(selected || 'coffeescript');
       })(document);
     </script>
