@@ -138,13 +138,63 @@ describe 'FormView', ->
 <%= partial :- %>
 
 <p>
-  Following the same approach as above, testing the average model and collection is trivial, but the problem it poses is quite different: instead of isolating their logic from the DOM, you have to deal with ajax requests fired at the server, and while you could mock the requests (sinon.js can emulate ajax requests with custom responses), if you were to do that, you'd then have to mirror the API from within your client-side test suite, and keep them in sync.
+  Following the same approach as above, testing the average model and collection is trivial, but the problem it poses is different: instead the DOM, you have to deal with ajax requests fired at the server, and while you could mock the requests (sinon.js can emulate ajax requests with custom responses), if you were to do that, you'd then have to mirror the API from within your client-side test suite, and keep them in sync.
 </p>
 
 <p>
-  Alternatively you could run a local server with test data, and let real ajax requests through. It will run a lot slower than mocking, but it'd ensure that if anything changes with the API (as rare as those should be, but consider something just being developed), the data tests would start failing, and you can then fix it. As you can see, dealing with this problem is a game of tradeoffs where the right and wrong answers really depend on the case at hand.
+  Alternatively you could run a local server with test data, and let real ajax requests through. It will run a lot slower than mocking, but it'd ensure that if anything changes with the API (as rare as those changes should be, consider an app under  development), the data tests would start failing, and you can then fix it. As you can see, dealing with this problem is a game of tradeoffs where the right and wrong answers depend on the case at hand.
 </p>
 
 <p>
-  A third approach consists of mocking <code>fetch</code> where it applies, and injecting
+  A third approach consists of mocking the <code>fetch</code> method. Now this doesn't come for free either: it'll require you to know this method works for both models and collections. Of all problems, it's a good one to be had.
+</p>
+
+<p>
+  In the case of a model, <code>fetch()</code> syncs it with the server, so mocking that method can consist simply of setting mocked attributes:
+</p>
+
+<pre class="language-coffeescript"><code># …
+
+mockAttributes = ->
+  # Return an object containing faked values.
+
+describe 'Book', ->
+
+  before ->
+    Book.prototype.fetch = (options = {}) ->
+      @set mockAttributes()
+      options.success() if options.success?</code></pre>
+
+<p>
+  Since <code>set()</code> will trigger a <code>change</code> event on the model, should that be the event that's relevant to what you need to test, you're good to go. Though if you're using <code>sync</code> for any reason, you may need to call <code>trigger</code> with it to ensure it gets fired.
+</p>
+
+<p>
+  How complex this mock is depends on how the model uses <code>fetch()</code> in the cases you're testing: if passing certain options to it is key to how the model behaves, then you'll need to take that into consideration. The point here is showing how you can bypass the defaults so they don't get in the way of your test cases.
+</p>
+
+<p>
+  As for a collection, the way <code>fetch()</code> changes it is it populates it with models. So a simple mock works like this:
+</p>
+
+<pre class="language-coffeescript"><code># …
+
+mockBooks = (x) ->
+  # Returns an array with x mocked books.
+
+describe 'Books', ->
+
+  before ->
+    Books.prototype.fetch = (options = {}) ->
+      if options.reset is yes
+        @reset mockBooks(20)
+      else
+        @models = mockBooks(20)</code></pre>
+
+<p>
+  In particular for collections, <code>fetch()</code> doesn't call <code>reset()</code> by default since it clears a collection, and by default, <code>fetch()</code> attempts to merge models onto any existing ones there may be. So again, making this mock play by the exact rules Backbone's defaults do is an exercise that's only as worth as your test cases demand it.
+</p>
+
+<p>
+  Last, all of the aforementioned is only relevant to the aspects of testing your models and collections that involve syncing with a server. They probably do other things that don't involve any of this. For that, following the previous <code>FormView</code> example and using that as a boilerplate will get you there.
 </p>
