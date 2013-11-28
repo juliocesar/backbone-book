@@ -210,3 +210,75 @@ describe 'Books', ->
 
 <%= partial :- %>
 
+<p>
+  Testing your router should be, by far, the easiest piece of your app to test if you followed the tips in the <a href="/routing-and-controllers">Routing <span class="amp">&amp;</span> controllers</a> chapter. Mostly because if you did, the router really doesn't do much at all: the logic is all in the controllers.
+</p>
+
+<p>
+  So if you'd still like to write router tests, they'll mostly consist of checking whether the appropriate controllers are being called for each route, and you can mock them as simply as I've done thus far (see above). I suggest, however, not being too fussed about it.
+</p>
+
+<%= partial :- %>
+
+<p>
+  The final piece of this topic, controllers, are just functions which take zero or many parameters. Since their job is to pull data from the server and hand it to a view for rendering, it's important that you keep their tests really just ensuring that the appropriate view is being called and rendered with the model/collection it's expected to receive. Don't bother going beyond that as it'd mean you're violating the scope of the test.
+</p>
+
+<p>
+  To illustrate the idea with an example. Assume we have a <code>BooksController</code> which looks like this:
+</p>
+
+<pre class="language-coffeescript"><code># Books controller
+# ================
+#
+# Loads books and gives it to a books list component for rendering.
+
+BooksController = ->
+
+  # Keep a reference to the collection in the controller.
+  if not BooksController.collection?
+    BooksController.collection = new Books
+
+  # And keep a reference to the view.
+  if not BooksController.view?
+    BooksController.view = new BooksList
+
+  # Shorthands.
+  collection = BooksController.collection
+  view = BooksController.view
+  view.collection = collection
+
+  $('body').empty().append view.render().el
+
+  if collection.isEmpty()
+    collection.fetch()</code></pre>
+
+<p>
+  The need for the local references depends on whether you're keeping those globals or not. For example, if you're keeping a global <code>App.Books</code> collection, you'd then refer to it in the controller, and in which case you can forgo creating a local reference. Though you'd then need to mock it's fetch method in the test.
+</p>
+
+<p>
+  Another particular detail is that a controller function as the one above has it's state changed when it assigns references to objects in itself. So you can be blunt and delete those attributes (effectively resetting it), or you can work on copies of the function in each assertion.
+</p>
+
+<pre class="language-coffeescript"><code># BooksController test
+# ============
+
+BooksController = require 'controllers/books'
+Router          = require 'router'
+
+describe 'BooksController', ->
+  before ->
+    # Create a copy of the controller for each test case.
+    @copy = BooksController.bind(Router)
+
+  it 'has a BookList view', ->
+    @copy()
+    expect(@copy.view).to.be.a(BooksList)
+
+  it "calls fetch() on it's collection", ->
+    called = no
+    @copy.collection.fetch = ->
+      called = yes
+    @copy()
+    expect(called).to.be(true)</code></pre>
