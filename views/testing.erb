@@ -1,0 +1,298 @@
+<% @title = 'Testing' %>
+
+<h1>
+  Testing
+</h1>
+
+<p>
+  Testing browser applications can be very easy or very hard, depending on your architectural choices. There are too many parts that are external to the core logic  involved in running a browser app, and the way we seem to have settled on doing it is by applying a browser engine to it. Fact is, when you test interactions such  clicks/taps, there's no other way to do it. And therein lies the trick: keeping user interactions as detached from the app's logic as possible.
+</p>
+
+<p>
+  Data-binding — available out of the box in Ember or Angular, and through libraries for Backbone — tends to make testing a lot easier in that regard because you're effectively delegating the relationship between the DOM and the app to it, and it consequently allows you to test the logic alone and assume all information will be reflected in the DOM correctly.
+</p>
+
+<p>
+  This won't be covered here, though. If you followed the tips given thus far in this booklet, your apps should be fairly detached from the DOM anyway. The lot of the logic behind it will be testable minus your views' <code>render</code> method. For that, you will need to drop to browser testing. The upside is those tests will be few, and you can realistically keep the fast feedback cycle of unit tests going during development.
+</p>
+
+<p>
+  One final word for this short intro: testing is not, and will never be, a guaranteed recipe for high quality software. The value you get out of it is proportional to your ability to architect software correctly. A tested, yet poorly architected app is further evidenced by its tests passing, leaving you under the illusion it's good quality software when it's not.
+</p>
+
+<%= partial :- %>
+
+<p>
+  In the interest of saving you time discovering what the good testing tools are, and have you instead invest time in applying them, the following form a great trio.
+</p>
+
+<p>
+  The best, non-magic testing library is <a href="http://visionmedia.github.io/mocha/">Mocha</a>, period. Mocha won't try to guess how your app works. Your tests will look explicit, so anyone reading a test can immediately understand how something is meant to work, which is the bigger benefit of doing this if you're not alone in maintaining the app.
+</p>
+
+<p>
+  For asserting, you should look into <a href="https://github.com/LearnBoost/expect.js">expect.js</a>. Not much to be said about it other than it does what it advertises, and that framing tests as expectations is a great way to go about it.
+</p>
+
+<p>
+  For mocking, check out <a href="http://sinonjs.org/">Sinon.JS</a>. Mocking is in itself contentious since if done wrong — and it's <strong>very</strong> easy to do so — it can end up acting as a complete (albeit lighter) re-implementation of the program's logic, and with that result in massive amounts of time wasted in maintaining your mocks. It's often simpler to just replace methods for other, simpler methods, which will act as mocks, as you'll see further in this chapter.
+</p>
+
+<%= partial :- %>
+
+<p>
+  Test runners come in many shapes and sizes, but they all work the same way: they load core dependencies including the testing library, load the class/module to be tested, set up any mocks if any, then run the testing scripts in that environment.
+</p>
+
+<p>
+  That's all great, but again, avoid packages that make too many assumptions on your behalf, or end up forcing you to write tests that aren't explicit (e.g.: cases when it's not obvious how you ended up having access to a library you didn't load yourself).
+</p>
+
+<p>
+  Should you choose to go for mocha and nothing else, in order to run your tests using the <code>mocha</code> CLI interface you'll <strong>need</strong> to use browserify for the rest of your app. Reason being mocha is node.js, and it'll presume the modules you're using are loading their dependencies using node's module system, which is what browserify is.
+</p>
+
+<p>
+  Otherwise, if you're using Rails, <a href="https://github.com/modeset/teaspoon">teaspoon</a> offers seamless integration with Sprockets, allowing you to use directives such as Sprocket's <code>require</code> inside a test script, so you retain the benefit of being able to load things in the same style as you do in the manifest while still keeping the test's dependencies explicitly declared.
+</p>
+
+<%= partial :- %>
+
+<p>
+  Say we have a <code>FormView</code> view, whose purpose is to capture input from a form and create or edit a <code>Book</code> model. We know this view will need to capture the form <code>submit</code> event, pull out the values from each form field and instance a new model (or set an existing one) with attributes from the form values.
+</p>
+
+<pre class="language-coffeescript"><code>class FormView extends Backbone.View
+  template: JST['books/form']
+  events:
+    'submit form': 'submitForm'
+
+  initialize: (options = {}) ->
+    @model = @model ? options.model
+
+  submitForm: (event) ->
+    event.preventDefault()
+    @model.set
+      name: @$el.find('.name').val(),
+      description: @$el.find('.description').val()
+    @collection.add @model
+    @model.save()</code></pre>
+
+<p>
+  The above works, so it <strong>seems</strong> correct. But there's a big problem here: there's no way to verify this feature works without an actual form element existing, and thus, without this view having been rendered. We need to isolate the model creation logic so it can be tested separately. As an aside, this is an excellent example of code that passes tests, but it is, nevertheless, a bad idea.
+</p>
+
+<pre class="language-coffeescript"><code>class FormView extends Backbone.View
+  template: JST['books/form']
+  events:
+    'submit form': 'submitForm'
+
+  initialize: (options = {}) ->
+    @model = @model ? options.model
+
+  submitForm: (event) ->
+    event.preventDefault()
+    @createOrUpdateModel
+      name: @$el.find('.name').val(),
+      description: @$el.find('.description').val()
+
+  createOrUpdateModel: (attributes) ->
+    @model.set attributes
+    @collection.add @model
+    @model.save()</code></pre>
+
+<p>
+  You can now test the feature like this:
+</p>
+
+<pre class="language-coffeescript"><code># FormView tests
+# ============
+#
+# Run using:
+#
+# $ NODE_PATH=path/to/javascripts mocha --compilers coffee:coffee-script \
+#     test/javascripts/views/form-view.coffee
+
+$        = require 'jquery'
+Backbone = require 'backbone'
+FormView = require 'views/form-view'
+
+# Backbone.$ will be undefined unless you assign it.
+Backbone.$ = $
+
+describe 'FormView', ->
+  it "creates a model and adds to its collection when none is passed", ->
+    view = new FormView
+    view.createOrUpdateModel {}
+    expect(view.collection.length).to.be 1
+
+  it "updates its model with the parameters passed", ->
+    view = new FormView model: (new Backbone.Model)
+    view.createOrUpdateModel name: 'foo'
+    expect(view.model.get 'name').to.be 'foo'</code></pre>
+
+<p>
+  In short, the callback methods in the <code>events</code> object — originated from user interactions — aren't tested here. The callbacks will never contain logic beyond handling the interaction itself, and will instead use to other methods that take simple data structures as parameters, which constitute the class/module's real API.
+</p>
+
+<p>
+  And when writing browser tests for the interactions, you can just restrict the assertions to merely checking whether the appropriate internal methods were called.
+</p>
+
+<%= partial :- %>
+
+<p>
+  Following the same approach as above, as in go ahead and copy and paste that file around for creating new tests, testing the average model and collection is trivial, but the problem it poses is different: instead the DOM, you have to deal with ajax requests fired at the server, and while you could mock the requests (sinon.js can emulate ajax requests with custom responses), if you were to do that, you'd then have to mirror the API from within your client-side test suite, and keep them in sync.
+</p>
+
+<p>
+  Alternatively you could run a local server with test data, and let real ajax requests through. It will run a lot slower than mocking, but it'd ensure that if anything changes with the API (as rare as those changes should be, consider an app under  development), the data tests would start failing, and you can then make the necessary changes on the client-side. As you can see, dealing with this problem is a game of tradeoffs where the right and wrong answers depend on the case at hand.
+</p>
+
+<p>
+  A third approach consists of mocking the <code>fetch</code> method. Now this doesn't come for free either: it'll require you to know exactly how this method works for both models and collections. Of all problems, it's a good one to be had.
+</p>
+
+<p>
+  In the case of a model, <code>fetch()</code> syncs it with the server, so mocking that method can consist simply of setting mocked attributes:
+</p>
+
+<pre class="language-coffeescript"><code># …
+
+# Return an object containing faked values.
+mockAttributes = ->
+
+# Mock version of fetch that just sets attributes and
+# fires the `success` callback.
+mockFetch = (options = {}) ->
+  @set mockAttributes()
+  options.success() if options.success?
+
+describe 'Book', ->
+  before ->
+    # Replace the instance method with the mocked version.
+    Book.prototype.fetch = mockFetch
+
+  # …</code></pre>
+
+<p>
+  Since <code>set()</code> will trigger a <code>change</code> event on the model, should that be the event that's relevant to what you need to test, you're good to go. Though if you're using <code>sync</code> for any reason, you may need to call <code>trigger</code> with it to ensure it gets fired.
+</p>
+
+<p>
+  How complex this mock is depends on how the model uses <code>fetch()</code> in the cases you're testing: if passing certain options to it is key to how the model behaves, then you'll need to take that into consideration. The point here is showing how you can bypass the defaults so they don't get in the way of your test cases.
+</p>
+
+<p>
+  As for a collection, the way <code>fetch()</code> changes it is it populates it with models. So a simple mock works like this:
+</p>
+
+<pre class="language-coffeescript"><code># …
+
+# Returns an array with x mocked books.
+mockBooks = (x) ->
+
+# Mocked version of fetch which creates 20 models in
+# the collection.
+mockFetch = (options = {}) ->
+  if options.reset is yes
+    @reset mockBooks(20)
+  else
+    @models = mockBooks(20)
+
+describe 'Books', ->
+  before ->
+    Books.prototype.fetch = mockFetch</code></pre>
+
+<p>
+  For collections, by default <code>fetch()</code> will not use <code>reset()</code> (you need to pass <code>reset: true</code>). What it'll do instead is it'll attempt to merge models onto any existing ones there may be. Again, making this mock play by the exact rules Backbone's defaults do is an exercise that's only as worth as your test cases demand it.
+</p>
+
+<p>
+  Last, all of the aforementioned is only relevant to the aspects of testing your models and collections that involve syncing with a server. They probably do other things that don't involve any of this. For that, following the previous <code>FormView</code> example and using that as a boilerplate will get you there.
+</p>
+
+<%= partial :- %>
+
+<p>
+  Testing your router should be a lot easier if you followed the tips in the <a href="/routing-and-controllers">Routing <span class="amp">&amp;</span> controllers</a> chapter. Mostly because if you did, the router really doesn't do much at all: the logic is all in the controllers.
+</p>
+
+<p>
+  So if you'd still like to write router tests, they'll mostly consist of checking whether the appropriate controllers are being called for each route, and you can mock them as simply as I've done thus far (see above). I suggest, however, not being too fussed about it.
+</p>
+
+<%= partial :- %>
+
+<p>
+  The final piece of this topic, controllers, are just functions which take zero or many parameters. Since their job is to pull data from the server and hand it to a view for rendering, it's important that you keep their tests really just ensuring that the appropriate view is being called and rendered with the model/collection it's expected to receive. Don't bother going beyond that as it'd mean you're violating the scope of the test.
+</p>
+
+<p>
+  To illustrate the idea with an example. Assume we have a <code>BooksController</code> which looks like this:
+</p>
+
+<pre class="language-coffeescript"><code># Books controller
+# ================
+#
+# Loads books and gives it to a books list component for rendering.
+
+BooksController = ->
+
+  # Keep a reference to the collection in the controller.
+  if not BooksController.collection?
+    BooksController.collection = new Books
+
+  # And keep a reference to the view.
+  if not BooksController.view?
+    BooksController.view = new BooksList
+
+  # Shorthands.
+  collection = BooksController.collection
+  view = BooksController.view
+  view.collection = collection
+
+  $('body').empty().append view.render().el
+
+  if collection.isEmpty()
+    collection.fetch()</code></pre>
+
+<p>
+  The need for the local references, such as assigning the collection to <code>BooksController.collection</code> depends on whether you're using browserify (and mocha). Should you be using teaspoon and instead, keep things nested under a global <code>App</code> variable as suggested in previous chapters, you can just refer to it as you'd do in the browser.</p>
+
+<pre class="language-coffeescript"><code># BooksController test
+# ============
+
+Backbone        = require 'backbone'
+BooksController = require 'controllers/books'
+Router          = require 'router'
+
+fetched = no
+Backbone.Collection.prototype.fetch = ->
+  fetched = yes
+
+describe 'BooksController', ->
+  beforeEach ->
+    BooksController()
+
+  afterEach ->
+    fetched = no
+
+  it 'has a BookList view', ->
+    expect(BooksController.view).to.be.a(BooksList)
+
+  it "calls fetch() on it's collection", ->
+    expect(fetched).to.be(true)
+
+  it 'does other things', ->
+    # …</code></pre>
+
+<%= partial :- %>
+
+<p>
+  Building a maintainable, fast test suite, for an average sized app even, can be a lot of work. It helps thinking through what is worthwhile testing and when.
+</p>
+
+<p>
+  The 100% coverage church will say testing every outer and inner case of every module is what you should do, but more often than not this results in a test suite that's too tightly coupled with the implementation, and the exercise goes from helpful to overly laborious really quickly.
+</p>
