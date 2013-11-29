@@ -45,11 +45,15 @@
 </p>
 
 <p>
-  That's all great, but again, avoid packages that make too many assumptions on your behalf, or end up forcing you to write tests that aren't explicit (e.g.: cases when it's not obvious how you ended up having access to a library you didn't explicitly load yourself). Following the formula above, you should be able to write tests as simple scripts that you can call using the <code>mocha</code> CLI, and they should run fine. If it's <strong>impossible</strong> to run your tests like that, then try and make it so it does.
+  That's all great, but again, avoid packages that make too many assumptions on your behalf, or end up forcing you to write tests that aren't explicit (e.g.: cases when it's not obvious how you ended up having access to a library you didn't load yourself).
 </p>
 
 <p>
-  The point is you want to stay away from a runner that obscures things. To a degree, there are exceptions to this rule: if you're using Rails, <a href="https://github.com/modeset/teaspoon">teaspoon</a> offers seamless integration with Sprockets, allowing you to use directives such as <code>require</code> inside a test script, so you retain the benefit of being able to load things in the style of a manifest while still keeping the test's dependencies explicitly declared.
+  Should you choose to go for mocha and nothing else, in order to run your tests using the <code>mocha</code> CLI interface you'll <strong>need</strong> to use browserify for the rest of your app. Reason being mocha is node.js, and it'll presume the modules you're using are loading their dependencies using node's module system, which is what browserify is.
+</p>
+
+<p>
+  Otherwise, if you're using Rails, <a href="https://github.com/modeset/teaspoon">teaspoon</a> offers seamless integration with Sprockets, allowing you to use directives such as Sprocket's <code>require</code> inside a test script, so you retain the benefit of being able to load things in the same style as you do in the manifest while still keeping the test's dependencies explicitly declared.
 </p>
 
 <%= partial :- %>
@@ -211,7 +215,7 @@ describe 'Books', ->
 <%= partial :- %>
 
 <p>
-  Testing your router should be, by far, the easiest piece of your app to test if you followed the tips in the <a href="/routing-and-controllers">Routing <span class="amp">&amp;</span> controllers</a> chapter. Mostly because if you did, the router really doesn't do much at all: the logic is all in the controllers.
+  Testing your router should be a lot easier if you followed the tips in the <a href="/routing-and-controllers">Routing <span class="amp">&amp;</span> controllers</a> chapter. Mostly because if you did, the router really doesn't do much at all: the logic is all in the controllers.
 </p>
 
 <p>
@@ -254,31 +258,41 @@ BooksController = ->
     collection.fetch()</code></pre>
 
 <p>
-  The need for the local references depends on whether you're keeping those globals or not. For example, if you're keeping a global <code>App.Books</code> collection, you'd then refer to it in the controller, and in which case you can forgo creating a local reference. Though you'd then need to mock it's fetch method in the test.
-</p>
-
-<p>
-  Another particular detail is that a controller function as the one above has it's state changed when it assigns references to objects in itself. So you can be blunt and delete those attributes (effectively resetting it), or you can work on copies of the function in each assertion.
-</p>
+  The need for the local references, such as assigning the collection to <code>BooksController.collection</code> depends on whether you're using browserify (and mocha). Should you be using teaspoon and instead, keep things nested under a global <code>App</code> variable as suggested in previous chapters, you can just refer to it as you'd do in the browser.</p>
 
 <pre class="language-coffeescript"><code># BooksController test
 # ============
 
+Backbone        = require 'backbone'
 BooksController = require 'controllers/books'
 Router          = require 'router'
 
+fetched = no
+Backbone.Collection.prototype.fetch = ->
+  fetched = yes
+
 describe 'BooksController', ->
-  before ->
-    # Create a copy of the controller for each test case.
-    @copy = BooksController.bind(Router)
+  beforeEach ->
+    BooksController()
+
+  afterEach ->
+    fetched = no
 
   it 'has a BookList view', ->
-    @copy()
-    expect(@copy.view).to.be.a(BooksList)
+    expect(BooksController.view).to.be.a(BooksList)
 
   it "calls fetch() on it's collection", ->
-    called = no
-    @copy.collection.fetch = ->
-      called = yes
-    @copy()
-    expect(called).to.be(true)</code></pre>
+    expect(fetched).to.be(true)
+
+  it 'does other things', ->
+    # …</code></pre>
+
+<%= partial :- %>
+
+<p>
+  Building a maintainable, fast test suite, for an average sized app even, can be a lot of work. It helps thinking through what is worthwhile testing and when.
+</p>
+
+<p>
+  The 100% coverage church will say testing every outer and inner case of every module is what you should do, but more often than not this results in a test suite that's too tightly coupled with the implementation, and the exercise goes from helpful to overly laborious really quickly.
+</p>
