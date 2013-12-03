@@ -54,9 +54,9 @@
         var eventName = touch ? 'touchend' : 'click';
         togglerButton.addEventListener(eventName, function() {
           if (selected === 'javascript') {
-            switchTo('javascript');
-          } else {
             switchTo('coffeescript');
+          } else {
+            switchTo('javascript');
           }
         }, false);
         switchTo(selected || 'coffeescript');
