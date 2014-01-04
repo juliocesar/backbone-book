@@ -288,7 +288,8 @@ var PartialModel = Backbone.Model.extend({
 <%= partial :- %>
 
 <p>
-  Where and when you instance your collections has to be consistent with the data strategy you conceive. It seems popular to, on every route (when a URL is visited), you instance a collection, fetch data for it, pass it to a view and render it. But that pattern leaves out something you'll want 90% of the time, which is <strong>not</strong> discarding data you have already have.
+  Where and when you instance your collections has to be consistent with the data strategy you conceive. It is
+  popular to instance a collection, fetch data for it, pass it to a view and render it for each route. But this pattern leaves out something you'll want 90% of the time, which is <strong>not</strong> discarding data you have already have.
 </p>
 
 <p>

@@ -17,7 +17,7 @@
 </p>
 
 <p>
-  Hence if and where you choose to have state in your app, you’ll need to use the router for constructing the UI. The low-level logic for doing all that won't live in the router itself of course. Instead, it'll fetch data using models/collections, and it’ll instance and render views to display the data. In a gist: it's <strong>with</strong> the router that you'll “assemble” your application where state applies.
+  Hence if and where you choose to have state in your app, you’ll need to use the router for constructing the UI. The low-level logic for doing all that won't live in the router itself of course. Instead, it'll fetch data using models/collections, and it’ll instance and render views to display the data. Put simply: it's <strong>with</strong> the router that you'll “assemble” your application where state applies.
 </p>
 
 <%= partial :- %>
@@ -145,7 +145,7 @@ var Router = Backbone.Router.extend({
 <%= partial :- %>
 
 <p>
-  On scaling and refactoring controllers, earlier in the <a href="/models-collections-and-data">Models, collections <span class="amp">&amp;</span> data</a> chapter I've described a repetitive data loading pattern. Mind the refactoring steps:
+  On scaling and refactoring controllers, earlier in the <a href="/models-collections-and-data">Models, collections <span class="amp">&amp;</span> data</a> chapter I described a repetitive data loading pattern. Mind the refactoring steps:
 </p>
 
 <pre class="language-coffeescript"><code># View books screen controller
@@ -395,15 +395,15 @@ author.fetch({
 <%= partial :- %>
 
 <p>
-  Earlier in the <a href="/models-collections-and-data">Models, collections &amp; data</a> chapter I briefly explained a strategy for data fetching where not discarding a collection, or rather not instancing a new one and fetching every time a route is visited is a good idea.
+  Earlier in the <a href="/models-collections-and-data">Models, collections &amp; data</a> chapter I briefly explained a strategy for data fetching where reusing existing collection data when a route is visited is a good idea.
 </p>
 
 <p>
-  And as I explained earlier in this chapter, part of constructing the UI (the router's role) consists of fetching data which is then passed to a view for displaying. Creating a fast app has a lot to do with how smartly it does this in particular.
+  And as I explained earlier in this chapter, part of constructing the UI (the router's role) consists of fetching data which is then passed to a view for displaying. Creating a fast app has a lot to do with how smartly it does this.
 </p>
 
 <p>
-  Staying within the example thus far, and to keep this simple let's just say this is a personal catalogue of books. At any given time I'll be dealing with <strong>one</strong> collection of books: the ones I own. I could instance a collection of books elsewhere in the app to handle that, possibly within the user object, and keep this data around for as long as the session goes on.
+  Staying within the example thus far, and to keep things simple let's consider a personal catalogue of books. At any given time I'll be dealing with <strong>one</strong> collection of books: the ones I own. I could instance a collection of books elsewhere in the app to handle that, possibly within the user object, and keep this data around for as long as the session goes on.
 </p>
 
 <p>
@@ -552,7 +552,7 @@ var viewSingleBookController = function(bookId) {
 }</code></pre>
 
 <p>
-  In a gist, what this controller does is if it finds that a book is already in the user's catalogue collection, it hands it to the appropriate view and gets it to render it, otherwise it fetches it first, adds to the catalogue, and then renders it. So now if I navigate away from this book's page and back to it, it'll also render it instantly.
+  In essence, what this controller does is if it finds that a book is already in the user's catalogue collection, it hands it to the appropriate view and gets it to render it, otherwise it fetches it first, adds to the catalogue, and then renders it. So now if I navigate away from this book's page and back to it, it'll also render it instantly.
 </p>
 
 <p>
@@ -591,5 +591,5 @@ if (model) {
 }</code></pre>
 
 <p>
-  This re-rendering of the view should then display the updated data, and of course, for good UX sake a near-instant update is better than a slow one, but you can mitigate that by displaying a progress indicator somewhere so the user knows it's looking for data in the server. In the meantime, the user is given something to work with, which in the likelihood of it not being stale data, it'll be all that they need.
+  This re-rendering of the view should then display the updated data, and of course, for the sake of good UX a near-instant update is better than a slow one, but you can mitigate that by displaying a progress indicator somewhere so the user knows it's looking for data in the server. In the meantime, the user is given something to work with, which in the likelihood of it not being stale data, it'll be all that they need.
 </p>
