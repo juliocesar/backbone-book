@@ -297,11 +297,11 @@ var BookPresenter = _.extend(ModelPresenter.prototype, {
 <%= partial :- %>
 
 <p>
-  The way a Backbone view works by default, you need to specify a <code>tagName</code> and/or a <code>className</code>. I’m from the opinion that those details should live entirely in the template, since they are markup-related, and that the template should include the root element along with any CSS classes it may have.
+  The way a Backbone view works by default, you need to specify a <code>tagName</code> and/or a <code>className</code>. I’m of the opinion that those details should live entirely in the template, since they are markup-related, and that the template should include the root element along with any CSS classes it may have.
 </p>
 
 <p>
-  What that means is the <code>render</code> method takes a hit in terms of how complex it ends, but it’s worth it for the sake of isolation.
+  What that means is the <code>render</code> method takes a hit in terms of how complex it ends up being, but it’s worth it for the sake of isolation.
 </p>
 
 <pre class="language-coffeescript"><code>render: ->
@@ -497,7 +497,7 @@ var NewBookView = Backbone.View.extend({
 <%= partial :- %>
 
 <p>
-  Let the boudaries or markup be the limits of what a component touches, and code it so it works stand-alone.
+  Let the boundaries or markup be the limits of what a component touches, and code it so it works stand-alone.
 </p>
 
 <p>

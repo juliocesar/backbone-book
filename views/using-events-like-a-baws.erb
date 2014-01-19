@@ -269,7 +269,7 @@ Scrolling.initialize = function() {
 });</code></pre>
 
 <p>
-  And this is terrible UX, but so the point can be demonstrated, let's say when another user leaves a comment on a book, we want to scroll the page to it, and that the method <code>getOffsetForModel</code> magically returns the Y axis offset for a book:
+  This is terrible UX but, so the point can be demonstrated, let's say when another user leaves a comment on a book, we want to scroll the page to it, and that the method <code>getOffsetForModel</code> magically returns the Y axis offset for a book:
 </p>
 
 <pre class="language-coffeescript"><code># ...
@@ -363,7 +363,7 @@ Scrolling.initialize = function() {
 <%= partial :- %>
 
 <p>
-  By now you got the gist: events allow you to avoid having to refer to a class/module from within another class/module directly (by name). This eliminates scenarios such as modules needing to be executed in order. And as a consequence, it lets you literally assemble the UI from pieces.
+  By now you should have the main idea: events allow you to avoid having to refer to a class/module from within another class/module directly (by name). This eliminates scenarios such as modules needing to be executed in order. And as a consequence, it lets you literally assemble the UI from pieces.
 </p>
 
 <p>
