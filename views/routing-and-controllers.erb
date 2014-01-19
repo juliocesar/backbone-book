@@ -262,7 +262,7 @@ var renderAndFetchBooks = function(collection, $container) {
   author.books.fetch();
 }
 
-# The controller itself. This is what gets exported.
+// The controller itself. This is what gets exported.
 var viewBooksController = function(authorId) {
   var author = authors.get(authorId);
   if (author) {
