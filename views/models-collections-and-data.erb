@@ -75,7 +75,7 @@ var URLs = {
 // to Rails' URL helpers.
 var apiUrl = function(type) {
   return URLs[type] ?
-    URLs[type].call(this, [].slice.call(arguments, 1)) :
+    URLs[type].apply(this, [].slice.call(arguments, 1)) :
     undefined;
 }</code></pre>
 
