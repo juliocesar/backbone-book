@@ -19,7 +19,7 @@
 </p>
 
 <p>
-  You can think of it as a global message exchange. You'll dump on it anything that's not of interest to an immediate module relationship. An immediate relationship is, for example, a view and it's model. Now if for example your app flashes a message that stays visible for a few seconds every time a <code>Book</code> is created, then this flash component works a lot like an addon which isn't tied to the view that does the model creation, nor the model itself.
+  You can think of it as a global message exchange. You'll dump on it anything that's not of interest to an immediate module relationship. An immediate relationship is, for example, a view and its model. Now if for example your app flashes a message that stays visible for a few seconds every time a <code>Book</code> is created, then this flash component works a lot like an addon which isn't tied to the view that does the model creation, nor the model itself.
 </p>
 
 <p>
@@ -65,7 +65,7 @@
 });</code></pre>
 
 <p>
-  Now think for a second about what we accomplished: we know that what <code>Flash</code> needs in order to work is for an event to be triggered on <code>Backbone</code> named <code>books:created</code>. That's it. Now in the course of testing this component, so long as we do that and pass an instance of <code>Book</code> to it (or a mock), the whole of it's functionality can be specced independently of any other piece of UI.
+  Now think for a second about what we accomplished: we know that what <code>Flash</code> needs in order to work is for an event to be triggered on <code>Backbone</code> named <code>books:created</code>. That's it. Now in the course of testing this component, so long as we do that and pass an instance of <code>Book</code> to it (or a mock), the whole of its functionality can be specced independently of any other piece of UI.
 </p>
 
 <%= partial :- %>

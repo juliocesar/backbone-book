@@ -281,7 +281,7 @@ describe 'BooksController', ->
   it 'has a BookList view', ->
     expect(BooksController.view).to.be.a(BooksList)
 
-  it "calls fetch() on it's collection", ->
+  it "calls fetch() on its collection", ->
     expect(fetched).to.be(true)
 
   it 'does other things', ->
