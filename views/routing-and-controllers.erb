@@ -65,7 +65,7 @@ var Router = Backbone.Router.extend({
 });</code></pre>
 
 <p>
-  As each method that handles a route gets more complex, the router will end up very complex very quickly, and it alone will be the container of way too application logic. The solution some adopt is using multiple routers, one for each topic part of the application, but while that addresses the problem of having a long router file, it fails to tackle the problem of separation of concerns: the router is doing it's job so long as it dispatches a function when a URL is visited. What that function does, however, can live outside of it.
+  As each method that handles a route gets more complex, the router will end up very complex very quickly, and it alone will be the container of way too much application logic. The solution some adopt is using multiple routers, one for each topic part of the application, but while that addresses the problem of having a long router file, it fails to tackle the problem of separation of concerns: the router is doing it's job so long as it dispatches a function when a URL is visited. What that function does, however, can live outside of it.
 </p>
 
 <p>
