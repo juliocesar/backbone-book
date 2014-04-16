@@ -49,7 +49,7 @@ URLs =
   books: ->
     "/api/books"
   book: (id) ->
-    "/api/books/"
+    "/api/books/#{id}"
   subscriptions: (userId, id) ->
     "/api/users/#{userId}/subscriptions/#{id}"
 
@@ -64,7 +64,7 @@ var URLs = {
     return "/api/books";
   },
   book: function(id) {
-    return "/api/books/";
+    return "/api/books/"+ id;
   },
   subscriptions: function(userId, id) {
     return "/api/users/"+ userId +"/subscriptions/" + id;
