@@ -184,7 +184,7 @@ var apiUrl = function(type) {
 <%= partial :- %>
 
 <p>
-  The best way to handle pagination is by using  <a href="http://tools.ietf.org/html/rfc5988">link headers</a> (<a href="http://developer.github.com/v3/">GitHub’s API uses it</a>). To be clear: pagination doesn’t imply in your necessarily having <strong>pages</strong> of information. You could use this for infinite scrolling, or that. How you present it goes beyond what your collection needs to worry about.
+  The best way to handle pagination is by using  <a href="http://tools.ietf.org/html/rfc5988">link headers</a> (<a href="http://developer.github.com/v3/">GitHub’s API uses it</a>). To be clear: pagination doesn’t rely on your necessarily having <strong>pages</strong> of information. You could use this for infinite scrolling, or that. How you present it goes beyond what your collection needs to worry about.
 </p>
 
 <p>
@@ -210,7 +210,7 @@ var apiUrl = function(type) {
 });</code></pre>
 
 <p>
-  Obviously, collections that need pagination should inherit from <code>PaginatedCollection</code>. From hereon, you can check for <code>link.last?</code>, <code>link.next?</code> and so on in collection instances to determine whether there’s more data to be retrieved or not.
+  Obviously, collections that need pagination should inherit from <code>PaginatedCollection</code>. From here on, you can check for <code>link.last?</code>, <code>link.next?</code> and so on in collection instances to determine whether there’s more data to be retrieved or not.
 </p>
 
 <p>
@@ -288,8 +288,8 @@ var PartialModel = Backbone.Model.extend({
 <%= partial :- %>
 
 <p>
-  Where and when you instance your collections has to be consistent with the data strategy you conceive. It is
-  popular to instance a collection, fetch data for it, pass it to a view and render it for each route. But this pattern leaves out something you'll want 90% of the time, which is <strong>not</strong> discarding data you already have.
+  Where and when you instantiate your collections has to be consistent with the data strategy you conceive. It is
+  popular to instantiate a collection, fetch data for it, pass it to a view and render it for each route. But this pattern leaves out something you'll want 90% of the time, which is <strong>not</strong> discarding data you already have.
 </p>
 
 <p>
