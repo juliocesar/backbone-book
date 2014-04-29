@@ -99,7 +99,8 @@ var apiUrl = function(type) {
   Data associations are easy to solve without plugins <strong>if the server API is sane</strong>, so it’s worth making it so otherwise your data layer will absorb your API’s ugliness and amplify it by one hundred. Assume we have authors for those books I spoke of, and when fetching an author, I want to grab their books along. Say the API looks like this:
 </p>
 
-<pre><code>GET   /api/authors/1?with=books</code></pre>
+<pre class="language-coffeescript"><code>GET   /api/authors/1?with=books</code></pre>
+<pre class="language-javascript"><code>GET   /api/authors/1?with=books</code></pre>
 
 <p>
   And by calling this URL I get the author object along with a <code>books</code> attribute which is an array of book objects, here’s how you’d do it:
@@ -126,7 +127,8 @@ var apiUrl = function(type) {
   Loading associated data (one to many) is trivial once you think for a second about what makes sense. Assume you have this URL in your app:
 </p>
 
-<pre><code>/authors/:id/books</code></pre>
+<pre class="language-coffeescript"><code>/authors/:id/books</code></pre>
+<pre class="language-javascript"><code>/authors/:id/books</code></pre>
 
 <p>
   You need to grab the author first and then his/her books. This could go one of two ways: you have loaded the author before, and thus it’s in memory, or you need to grab it from the server and then grab the books.
