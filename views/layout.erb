@@ -42,7 +42,7 @@
         };
 
         d.addEventListener("keypress", function(event) {
-          if (!event.keyCode === 115) return;
+          if (event.keyCode !== 115) return;
           if (selected === 'javascript') {
             switchTo('coffeescript');
           } else {
