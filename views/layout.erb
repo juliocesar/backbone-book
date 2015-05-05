@@ -41,8 +41,8 @@
           }
         };
 
-        d.addEventListener("keypress", function(event) {
-          if (event.keyCode !== 115) return;
+        d.addEventListener("keyup", function(event) {
+          if (event.keyCode !== 83) return;
           if (selected === 'javascript') {
             switchTo('coffeescript');
           } else {
